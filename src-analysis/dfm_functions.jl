@@ -71,12 +71,26 @@ end
 
 function write_output(mean_fields, correlation_fields, frame, path)
     jldopen(path, "w") do file
-        file["uᶠⁿᶜ/$frame"] = mean_fields.uᶠⁿᶜ
-        file["vᶜⁿᶜ/$frame"] = mean_fields.vᶜⁿᶜ
-        file["wᶜⁿᶠ/$frame"] = mean_fields.wᶜⁿᶠ
-        file["bᶜⁿᶜ/$frame"] = mean_fields.bᶜⁿᶜ
-        file["φᶜⁿᶜ/$frame"] = mean_fields.φᶜⁿᶜ
-        
+        for (k, v) in pairs(mean_fields)
+            file["$k/$frame"] = v
+        end
+        for (k, v) in pairs(correlation_fields)
+            file["$k/$frame"] = v
+        end
+    end
+    return nothing
+end
+
+function write_grid_times(grid, frames, ts, path)
+    jldopen("path", "w") do file
+        for i, frame in enumerate(frames)
+            file["t/$frame"] = t[i]
+        end
+        file["serialized/grid"] = grid
+        # Now copy over grid things so Oceananigans isn't needed
+        for k in fieldnames(typeof(grid))
+            file["grid/$k"] = getproperty(grid, k)
+        end
     end
     return nothing
 end

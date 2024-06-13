@@ -17,8 +17,9 @@ opts = length(ARGS) > 1 ? ARGS[2] : ""
 filename = 'i' ∈ opts ? "initialisation" : "output"
 
 # Get grid and iterations
-grid, frames = jldopen("$input_folder/$filename.jld2") do file
-    file["serialized/grid"], parse.(Int, keys(file["timeseries/t"]))
+grid, frames, ts = jldopen("$input_folder/$filename.jld2") do file
+    frames = parse.(Int, keys(file["timeseries/t"]))
+    file["serialized/grid"], frames, [file["timeseries/t/$frame"] for frame in frames]
 end
 # Get simulation parameters
 sp = get_simulation_parameters(foldername)
@@ -63,9 +64,17 @@ w′b′ᶜⁿᶠ = dfm(KernelFunctionOperation{Center, Center, Face}(w′b′�
 correlation_fields = (; u′u′ᶠⁿᶜ, v′v′ᶜⁿᶜ, w′w′ᶜⁿᶠ)
 # Now we have defined all our operations, we loop over the frames
 
-for frame in frames
-    
-end
+output_path = "$input_folder/dfm.jld2"
 
+for frame in frames
+    # Get the data
+    update_fields!(input_fields, frame, "$input_folder/$filename.jld2")
+    # Compute 
+    map(compute!, mean_fields)
+    map(compute!, correlation_fields)
+    # Save to file
+    write_output(mean_fields, correlation_fields, frame, output_path)
+end
+write_grid_times(grid, frames, ts, output_path)
 
 
