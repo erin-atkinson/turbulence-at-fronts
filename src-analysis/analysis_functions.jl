@@ -18,3 +18,16 @@ function make_GPU_grid(grid)
     # (is there really no way to do this directly?)
     return grid
 end
+
+# Function to update input fields
+function update_fields!(input_fields, frame, path)
+    jldopen(path) do file
+        input_fields.u .= file["timeseries/u/$frame"]
+        input_fields.v .= file["timeseries/v/$frame"]
+        input_fields.w .= file["timeseries/w/$frame"]
+        input_fields.b .= file["timeseries/b/$frame"]
+        input_fields.φ .= file["timeseries/φ/$frame"]
+        map(fill_halo_regions!, input_fields)
+    end
+    return nothing
+end

@@ -56,19 +56,6 @@ function w′b′ᶜᶜᶜ_kernel_func(i, j, k, grid, w, w_dfm, b, b_dfm)
     return a′b′(i, j, k, grid, wᶜᶜᶜ, w_dfmᶜⁿᶜ, b, b_dfm)
 end
 
-# Function to update input fields
-function update_fields!(input_fields, frame, path)
-    jldopen(path) do file
-        input_fields.u .= file["timeseries/u/$frame"]
-        input_fields.v .= file["timeseries/v/$frame"]
-        input_fields.w .= file["timeseries/w/$frame"]
-        input_fields.b .= file["timeseries/b/$frame"]
-        input_fields.φ .= file["timeseries/φ/$frame"]
-        map(fill_halo_regions!, input_fields)
-    end
-    return nothing
-end
-
 function write_output(mean_fields, correlation_fields, frame, path)
     jldopen(path, "a") do file
         for (k, v) in pairs(mean_fields)
