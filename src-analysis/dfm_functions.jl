@@ -30,7 +30,7 @@ function v′w′ᶜᶜᶜ_kernel_func(i, j, k, grid, v, v_dfm, w, w_dfm)
     return a′b′(i, j, k, grid, vᶜᶜᶜ, v_dfm, wᶜᶜᶜ, w_dfmᶜᶜᶜ)
 end
 
-function w′u′ᶜᶜᶜ_kernel_func(i, j, k, grid, v, v_dfm, w, w_dfm)
+function w′u′ᶜᶜᶜ_kernel_func(i, j, k, grid, u, u_dfm, w, w_dfm)
     wᶜᶜᶜ = ℑzᵃᵃᶜ(i, j, k, grid, w)
     w_dfmᶜᶜᶜ = ℑzᵃᵃᶜ(i, j, k, grid, w_dfm)
     uᶜᶜᶜ = ℑxᶜᵃᵃ(i, j, k, grid, u)
@@ -38,39 +38,39 @@ function w′u′ᶜᶜᶜ_kernel_func(i, j, k, grid, v, v_dfm, w, w_dfm)
     return a′b′(i, j, k, grid, wᶜᶜᶜ, w_dfmᶜᶜᶜ, uᶜᶜᶜ, u_dfmᶜᶜᶜ)
 end
 
-# Buoyancy correlations on respective velocity location
-function u′b′ᶜᶜᶠ_kernel_func(i, j, k, grid, u, u_dfm, b, b_dfm)
-    bᶠᶜᶜ = ℑxᶠᵃᵃ(i, j, k, grid, b)
-    b_dfmᶠᶜᶜ = ℑxᶠᵃᵃ(i, j, k, grid, b_dfm)
-    return a′b′(i, j, k, grid, wᶜᶜᶜ, w_dfmᶜᶜᶜ, bᶠᶜᶜ, b_dfmᶠᶜᶜ)
+# Buoyancy correlations on center
+function u′b′ᶜᶜᶜ_kernel_func(i, j, k, grid, u, u_dfm, b, b_dfm)
+    uᶜᶜᶜ = ℑxᶜᵃᵃ(i, j, k, grid, b)
+    u_dfmᶜⁿᶜ = ℑxᶜᵃᵃ(i, j, k, grid, b_dfm)
+    return a′b′(i, j, k, grid, uᶜᶜᶜ, u_dfmᶜⁿᶜ, b, b_dfm)
 end
 
-function v′b′ᶜᶜᶠ_kernel_func(i, j, k, grid, v, v_dfm, b, b_dfm)
-    bᶜᶠᶜ = ℑyᵃᶠᵃ(i, j, k, grid, b)
-    return a′b′(i, j, k, grid, v, v_dfm, bᶜᶠᶜ, b_dfm)
+function v′b′ᶜᶜᶜ_kernel_func(i, j, k, grid, v, v_dfm, b, b_dfm)
+    vᶜᶜᶜ = ℑyᵃᶜᵃ(i, j, k, grid, v)
+    return a′b′(i, j, k, grid, vᶜᶜᶜ, v_dfm, b, b_dfm)
 end
 
-function w′b′ᶜᶜᶠ_kernel_func(i, j, k, grid, w, w_dfm, b, b_dfm)
-    bᶜᶜᶠ = ℑzᵃᵃᶠ(i, j, k, grid, b)
-    b_dfmᶜᶜᶠ = ℑzᵃᵃᶠ(i, j, k, grid, b_dfm)
-    return a′b′(i, j, k, grid, w, w_dfm, bᶜᶜᶠ, b_dfmᶜᶜᶠ)
+function w′b′ᶜᶜᶜ_kernel_func(i, j, k, grid, w, w_dfm, b, b_dfm)
+    wᶜᶜᶜ = ℑzᵃᵃᶜ(i, j, k, grid, w)
+    w_dfmᶜⁿᶜ = ℑzᵃᵃᶜ(i, j, k, grid, w_dfm)
+    return a′b′(i, j, k, grid, wᶜᶜᶜ, w_dfmᶜⁿᶜ, b, b_dfm)
 end
 
 # Function to update input fields
 function update_fields!(input_fields, frame, path)
     jldopen(path) do file
-        input_fields.u.data .= file["timeseries/u/$frame"]
-        input_fields.v.data .= file["timeseries/v/$frame"]
-        input_fields.w.data .= file["timeseries/w/$frame"]
-        input_fields.b.data .= file["timeseries/b/$frame"]
-        input_fields.φ.data .= file["timeseries/φ/$frame"]
+        input_fields.u .= file["timeseries/u/$frame"]
+        input_fields.v .= file["timeseries/v/$frame"]
+        input_fields.w .= file["timeseries/w/$frame"]
+        input_fields.b .= file["timeseries/b/$frame"]
+        input_fields.φ .= file["timeseries/φ/$frame"]
         map(fill_halo_regions!, input_fields)
     end
     return nothing
 end
 
 function write_output(mean_fields, correlation_fields, frame, path)
-    jldopen(path, "w") do file
+    jldopen(path, "a") do file
         for (k, v) in pairs(mean_fields)
             file["$k/$frame"] = v
         end
@@ -82,8 +82,8 @@ function write_output(mean_fields, correlation_fields, frame, path)
 end
 
 function write_grid_times(grid, frames, ts, path)
-    jldopen("path", "w") do file
-        for i, frame in enumerate(frames)
+    jldopen(path, "a") do file
+        for (i, frame) in enumerate(frames)
             file["t/$frame"] = t[i]
         end
         file["serialized/grid"] = grid
