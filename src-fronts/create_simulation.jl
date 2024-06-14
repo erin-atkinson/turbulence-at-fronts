@@ -76,7 +76,8 @@ include("initialise.jl")
     simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, φ); 
         filename="$output_folder/output.jld2", 
         schedule=TimeInterval(sp.write_freq),
-        overwrite_existing=true
+        overwrite_existing=true,
+        with_halos=true
     )
     
     # Output progress

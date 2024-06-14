@@ -71,13 +71,15 @@ include("closure.jl")
         JLD2OutputWriter(model, (; u, v, w, b); 
             filename="$output_folder/initialisation.jld2", 
             schedule=SpecifiedTimes([sp.turbulence_spinup]),
-            overwrite_existing=true
+            overwrite_existing=true,
+            with_halos=true
         )
     else
         JLD2OutputWriter(model, (; u, v, w, b, φ); 
             filename="$output_folder/initialisation.jld2", 
             schedule=TimeInterval(1/init_write_freq),
-            overwrite_existing=true
+            overwrite_existing=true,
+            with_halos=true
         )
     end
     progress(sim) = print("Running turbulent initialisation $(round(100*time(sim) / sp.turbulence_spinup; digits=1))%\r")
