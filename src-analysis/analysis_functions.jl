@@ -31,3 +31,16 @@ function update_fields!(input_fields, frame, path)
     end
     return nothing
 end
+
+function write_grid_times(grid, frames, ts, path)
+    jldopen(path, "a") do file
+        for (i, frame) in enumerate(frames)
+            file["t/$frame"] = ts[i]
+        end
+        # Now copy over grid things so Oceananigans isn't needed
+        for k in fieldnames(typeof(grid))
+            file["grid/$k"] = getproperty(grid, k)
+        end
+    end
+    return nothing
+end
