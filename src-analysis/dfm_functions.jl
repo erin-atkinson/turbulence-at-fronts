@@ -72,10 +72,10 @@ end
 function write_output(mean_fields, correlation_fields, frame, path)
     jldopen(path, "a") do file
         for (k, v) in pairs(mean_fields)
-            file["$k/$frame"] = v
+            file["$k/$frame"] = Array(v.data[-2:end, 1:1, -2:end])
         end
         for (k, v) in pairs(correlation_fields)
-            file["$k/$frame"] = v
+            file["$k/$frame"] = Array(v.data[-2:end, 1:1, -2:end])
         end
     end
     return nothing
@@ -86,7 +86,6 @@ function write_grid_times(grid, frames, ts, path)
         for (i, frame) in enumerate(frames)
             file["t/$frame"] = t[i]
         end
-        file["serialized/grid"] = grid
         # Now copy over grid things so Oceananigans isn't needed
         for k in fieldnames(typeof(grid))
             file["grid/$k"] = getproperty(grid, k)

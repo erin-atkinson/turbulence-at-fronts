@@ -6,7 +6,6 @@ dfm.jl
         [1]: Folder containing simulation output, will also output to this folder
     Pass options in last argument
         i: use initialisation run
-        v: verbose
 =#
 ENV["JULIA_SCRATCH_TRACK_ACCESS"] = 0
 include("analysis_functions.jl")
@@ -15,7 +14,6 @@ include("dfm_functions.jl")
 foldername = ARGS[1]
 opts = length(ARGS) > 1 ? ARGS[2] : ""
 filename = 'i' ∈ opts ? "initialisation" : "output"
-verbose = 'v' ∈ opts
 
 # Get grid and iterations
 frames, ts = jldopen("$foldername/$filename.jld2") do file
@@ -33,11 +31,11 @@ const sp = get_simulation_parameters(foldername)
 # input: u, v, w, b, ϕ
 # Create a field for each by loading the first iteration in file
 
-const u = FieldTimeSeries("$foldername/$filename.jld2", "u"; iterations=frames[51])[1]
-const v = FieldTimeSeries("$foldername/$filename.jld2", "v"; iterations=frames[51])[1]
-const w = FieldTimeSeries("$foldername/$filename.jld2", "w"; iterations=frames[51])[1]
-const b = FieldTimeSeries("$foldername/$filename.jld2", "b"; iterations=frames[51])[1]
-const φ = FieldTimeSeries("$foldername/$filename.jld2", "φ"; iterations=frames[51])[1]
+const u = FieldTimeSeries("$foldername/$filename.jld2", "u"; iterations=frames[1])[1]
+const v = FieldTimeSeries("$foldername/$filename.jld2", "v"; iterations=frames[1])[1]
+const w = FieldTimeSeries("$foldername/$filename.jld2", "w"; iterations=frames[1])[1]
+const b = FieldTimeSeries("$foldername/$filename.jld2", "b"; iterations=frames[1])[1]
+const φ = FieldTimeSeries("$foldername/$filename.jld2", "φ"; iterations=frames[1])[1]
 
 const input_fields = (; u, v, w, b, φ)
 @info "Created input fields"
@@ -72,24 +70,17 @@ const correlation_fields = (; u′u′ᶠⁿᶜ, v′v′ᶜⁿᶜ, w′w′ᶜ�
 # Now we have defined all our operations, we loop over the frames
 
 # see #2024
-
-
 output_path = "$foldername/dfm.jld2"
 println()
 for frame in frames
     # Get the data
-    verbose || print("Calculating... $frame\r")
-    verbose && "$(lpad(frame, '0', 5)): Updating fields"
+    print("Calculating... $frame\r")
     update_fields!(input_fields, frame, "$foldername/$filename.jld2")
-    # Compute 
-    verbose && "$(lpad(frame, '0', 5)): Computing mean fields"
-    @time map(compute!, mean_fields)
-    #verbose && "$(lpad(frame, '0', 5)): Computing mean field halo"
-    @time map(fill_halo_regions!, mean_fields)
-    verbose && "$(lpad(frame, '0', 5)): Computing correlation fields"
-    @time map(compute!, correlation_fields)
-    #verbose && "$(lpad(frame, '0', 5)): Computing correlation field halo"
-    @time map(fill_halo_regions!, correlation_fields)
+    # Compute
+    map(compute!, mean_fields)
+    map(fill_halo_regions!, mean_fields)
+    map(compute!, correlation_fields)
+    map(fill_halo_regions!, correlation_fields)
     
     # Save to file
     write_output(mean_fields, correlation_fields, frame, output_path)
