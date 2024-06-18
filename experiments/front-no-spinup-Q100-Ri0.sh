@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
-#SBATCH --time=3:00:00
+#SBATCH --time=24:00:00
 #SBATCH --job-name=front-initialisation-test
 #SBATCH --output=../scratch/logs/front-growth/front-no-spinup-Q100-Ri0.txt
 module load cuda/11.0.3
@@ -9,4 +9,4 @@ module load cuda/11.0.3
 cd ~/Project
 
 # Ri=0.3 Ro=0.6 1000x64x100 took 15 minutes to do 10/f
-./../julia-1.8.5/bin/julia -t 8 --project="env" -- src-fronts/simulation.jl ../scratch/Project/front-no-spinup-Q100-Ri0 0 "1e-4" 100 1000 64 100 "0.6" "0" "0" "100" "2" "0.5" 1000000
+./../julia-1.8.5/bin/julia -t 8 --project="env" -- src-fronts/simulation.jl ../scratch/Project/front-no-spinup-Q100-Ri0 0 "1e-4" 100 2048 256 128 "0.6" "0" "0" "100" "4" "1" 500000

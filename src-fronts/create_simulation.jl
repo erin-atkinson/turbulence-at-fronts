@@ -73,7 +73,9 @@ include("initialise.jl")
     #pHY′ = model.pressures.pHY′
     #pNHS = model.pressures.pNHS
     φ = model.pressures.pHY′ + model.pressures.pNHS
-    simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, φ); 
+    νₑ = model.diffusivity_fields.νₑ
+    κₑ = model.diffusivity_fields.κₑ
+    simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ, κₑ); 
         filename="$output_folder/output.jld2", 
         schedule=TimeInterval(sp.write_freq),
         overwrite_existing=true,

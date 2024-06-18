@@ -38,7 +38,7 @@ include("closure.jl")
     closure = create_closure(xs, ys, zs, base_state, sp)
     # Boundary conditions as usual
     boundary_conditions = create_boundary_conditions(base_state, sp)
-    
+    Δt = 1e-3/sp.f
     @info grid
     model = NonhydrostaticModel(; grid,
         coriolis = FPlane(; sp.f),
@@ -53,9 +53,7 @@ include("closure.jl")
     # Set the model state to the pre-initialisation state
     set!(model; pre_init_state...)
     
-    Δt = 1e-3/sp.f
     simulation = Simulation(model; Δt, stop_time=sp.turbulence_spinup)
-    
     wizard = TimeStepWizard(cfl=0.2, diffusive_cfl=0.2)
     simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
     
@@ -86,6 +84,7 @@ include("closure.jl")
     simulation.callbacks[:progress] = Callback(progress, IterationInterval(20))
     
     run!(simulation)
+    
     
     # This adds the reference state but since TTW frontogenesis doesn't exist
     # it's better to start with the whole front and cool it and wait for

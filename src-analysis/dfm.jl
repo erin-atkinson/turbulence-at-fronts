@@ -20,52 +20,52 @@ frames, ts = jldopen("$foldername/$filename.jld2") do file
     frames = parse.(Int, keys(file["timeseries/t"]))
     frames, [file["timeseries/t/$frame"] for frame in frames]
 end
-const grid = jldopen("$foldername/$filename.jld2") do file
+grid = jldopen("$foldername/$filename.jld2") do file
     file["serialized/grid"]
 end
 
 @info grid
 # Get simulation parameters
-const sp = get_simulation_parameters(foldername)
+sp = get_simulation_parameters(foldername)
 @info sp
 # input: u, v, w, b, ϕ
 # Create a field for each by loading the first iteration in file
 
-const u = FieldTimeSeries("$foldername/$filename.jld2", "u"; iterations=frames[1])[1]
-const v = FieldTimeSeries("$foldername/$filename.jld2", "v"; iterations=frames[1])[1]
-const w = FieldTimeSeries("$foldername/$filename.jld2", "w"; iterations=frames[1])[1]
-const b = FieldTimeSeries("$foldername/$filename.jld2", "b"; iterations=frames[1])[1]
-const φ = FieldTimeSeries("$foldername/$filename.jld2", "φ"; iterations=frames[1])[1]
+u = FieldTimeSeries("$foldername/$filename.jld2", "u"; iterations=frames[1])[1]
+v = FieldTimeSeries("$foldername/$filename.jld2", "v"; iterations=frames[1])[1]
+w = FieldTimeSeries("$foldername/$filename.jld2", "w"; iterations=frames[1])[1]
+b = FieldTimeSeries("$foldername/$filename.jld2", "b"; iterations=frames[1])[1]
+φ = FieldTimeSeries("$foldername/$filename.jld2", "φ"; iterations=frames[1])[1]
 
-const input_fields = (; u, v, w, b, φ)
+input_fields = (; u, v, w, b, φ)
 @info "Created input fields"
 # ᶜⁿᶠ
 # Mean fields
-const uᶠⁿᶜ = dfm(u)
-const vᶜⁿᶜ = dfm(v)
-const wᶜⁿᶠ = dfm(w)
-const bᶜⁿᶜ = dfm(b)
-const φᶜⁿᶜ = dfm(φ)
+uᶠⁿᶜ = dfm(u)
+vᶜⁿᶜ = dfm(v)
+wᶜⁿᶠ = dfm(w)
+bᶜⁿᶜ = dfm(b)
+φᶜⁿᶜ = dfm(φ)
 
-const mean_fields = (; uᶠⁿᶜ, vᶜⁿᶜ, wᶜⁿᶠ, bᶜⁿᶜ, φᶜⁿᶜ)
+mean_fields = (; uᶠⁿᶜ, vᶜⁿᶜ, wᶜⁿᶠ, bᶜⁿᶜ, φᶜⁿᶜ)
 @info "Created mean fields"
 # Correlation fields
 #  Self
-const u′u′ᶠⁿᶜ = dfm(KernelFunctionOperation{Face, Center, Center}(variance_kernel_func, grid, u, uᶠⁿᶜ))
-const v′v′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Face, Center}(variance_kernel_func, grid, v, vᶜⁿᶜ))
-const w′w′ᶜⁿᶠ = dfm(KernelFunctionOperation{Center, Center, Face}(variance_kernel_func, grid, w, wᶜⁿᶠ))
+u′u′ᶠⁿᶜ = dfm(KernelFunctionOperation{Face, Center, Center}(variance_kernel_func, grid, u, uᶠⁿᶜ))
+v′v′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Face, Center}(variance_kernel_func, grid, v, vᶜⁿᶜ))
+w′w′ᶜⁿᶠ = dfm(KernelFunctionOperation{Center, Center, Face}(variance_kernel_func, grid, w, wᶜⁿᶠ))
 
 #  Cross terms
-const u′v′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(u′v′ᶜᶜᶜ_kernel_func, grid, u, uᶠⁿᶜ, v, vᶜⁿᶜ))
-const v′w′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(v′w′ᶜᶜᶜ_kernel_func, grid, v, vᶜⁿᶜ, w, wᶜⁿᶠ))
-const w′u′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(w′u′ᶜᶜᶜ_kernel_func, grid, w, wᶜⁿᶠ, u, uᶠⁿᶜ))
+u′v′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(u′v′ᶜᶜᶜ_kernel_func, grid, u, uᶠⁿᶜ, v, vᶜⁿᶜ))
+v′w′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(v′w′ᶜᶜᶜ_kernel_func, grid, v, vᶜⁿᶜ, w, wᶜⁿᶠ))
+w′u′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(w′u′ᶜᶜᶜ_kernel_func, grid, w, wᶜⁿᶠ, u, uᶠⁿᶜ))
 
 #  Buoyancy
-const u′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(u′b′ᶜᶜᶜ_kernel_func, grid, u, uᶠⁿᶜ, b, bᶜⁿᶜ))
-const v′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(v′b′ᶜᶜᶜ_kernel_func, grid, v, vᶜⁿᶜ, b, bᶜⁿᶜ))
-const w′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(w′b′ᶜᶜᶜ_kernel_func, grid, w, wᶜⁿᶠ, b, bᶜⁿᶜ))
+u′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(u′b′ᶜᶜᶜ_kernel_func, grid, u, uᶠⁿᶜ, b, bᶜⁿᶜ))
+v′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(v′b′ᶜᶜᶜ_kernel_func, grid, v, vᶜⁿᶜ, b, bᶜⁿᶜ))
+w′b′ᶜⁿᶜ = dfm(KernelFunctionOperation{Center, Center, Center}(w′b′ᶜᶜᶜ_kernel_func, grid, w, wᶜⁿᶠ, b, bᶜⁿᶜ))
 
-const correlation_fields = (; u′u′ᶠⁿᶜ, v′v′ᶜⁿᶜ, w′w′ᶜⁿᶠ, u′v′ᶜⁿᶜ, v′w′ᶜⁿᶜ, w′u′ᶜⁿᶜ, u′b′ᶜⁿᶜ, v′b′ᶜⁿᶜ, w′b′ᶜⁿᶜ)
+correlation_fields = (; u′u′ᶠⁿᶜ, v′v′ᶜⁿᶜ, w′w′ᶜⁿᶠ, u′v′ᶜⁿᶜ, v′w′ᶜⁿᶜ, w′u′ᶜⁿᶜ, u′b′ᶜⁿᶜ, v′b′ᶜⁿᶜ, w′b′ᶜⁿᶜ)
 @info "Created correlation fields"
 # Now we have defined all our operations, we loop over the frames
 
@@ -78,9 +78,7 @@ for frame in frames
     update_fields!(input_fields, frame, "$foldername/$filename.jld2")
     # Compute
     map(compute!, mean_fields)
-    map(fill_halo_regions!, mean_fields)
     map(compute!, correlation_fields)
-    map(fill_halo_regions!, correlation_fields)
     
     # Save to file
     write_output(mean_fields, correlation_fields, frame, output_path)
