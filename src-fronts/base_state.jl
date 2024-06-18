@@ -2,8 +2,10 @@ using SpecialFunctions
 
 @inline g(s) = s < 0 ? 0 : sqrt(1 + s^2) - 1
 @inline γ(s, δ) = -1 + δ * (erf(s) + 1) / 2
-@inline γ′(s, δ) = 2δ * exp(-s^2 / 2) / sqrt(π)
-
+@inline γ′(s, δ) = δ * exp(-s^2) / sqrt(π)
+@inline A(δ) = maximum(range(-3, 3, 1000)) do s
+    γ(s, δ) * (γ′(s+5e-7, δ) - γ′(s-5e-7, δ)) / 1e-6 + γ′(s, δ)^2
+end
 #= 
 The base/reference state is a front above a mixed layer, with the varying mixed
 layer height providing the 
