@@ -10,14 +10,23 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5,
         # Mixed layer depth change
         δ = 0.1
         # Transition width
-        λ = 0.001
-        
+        λ = 0.01
+        # Mixed layer stratification relative to deep water
+        ε = 0.0001
         ℓ = U / (f * Ro)
+        # Compute the appropriate parameters here
         
-        ΔN² = -f^2 * Ro * ℓ^2 / H^2 / A(δ)
+        # Choose a with an iterative process
         
-        N² = Ri * ΔN²^2 * δ^2 * H^2 / (π * f^2 * ℓ^2)
-        N₀² = N² - ΔN²
+        # First make a guess of N₀²
+        
+        N₀² = f^2 * Ro * ℓ^2 / H^2 / A(δ)
+        
+        # This gives a guess of a
+        a = Ri * N₀² * δ * H / (sqrt(π) * f^2 * ℓ)
+        
+        # Refine the guess of a?
+        
         
         # Thermal properties of water
         α = 2.0678e-4 # K⁻¹
@@ -32,7 +41,7 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5,
         Lx = 10ℓ
         # Down-front length should be such that the the grid cells are isotropic in horizontal
         Ly = Lx * Ny / Nx
-        (; ip..., Lx, Ly, ℓ, ΔN², N², N₀², B, λ, δ)
+        (; ip..., Lx, Ly, ℓ, N₀², B, λ, δ, ε, a)
     end
 end
 

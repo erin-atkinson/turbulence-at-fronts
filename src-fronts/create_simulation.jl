@@ -30,7 +30,7 @@ include("initialise.jl")
     
     # For debugging initialisation just return here
     if run_time == 0
-        @warn "Returning no simulation, will LoadError later"
+        @warn "Returning no simulation, will LoadError"
         return nothing
     end
     

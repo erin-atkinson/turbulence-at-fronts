@@ -17,13 +17,7 @@ include("closure.jl")
     # Spin up the turbulence
     sp = (simulation_parameters..., α=0)
     
-    base_state = get_base_state(sp)
     (xs, ys, zs) = get_grid_faces(sp)
-    
-    # For the sake of the initialisation, the state should be with no front (at infinity)
-    pre_init_state = map(base_state) do f
-        (x, y, z) -> f(x, y, z) + 1e-8 * rand()
-    end
     
     grid = RectilinearGrid(GPU();
         x=xs,
@@ -32,6 +26,11 @@ include("closure.jl")
         size=(sp.Nx, sp.Ny, sp.Nz),
         topology=(Bounded, Periodic, Bounded)
     )
+    base_state = get_base_state(grid, sp)
+    # For the sake of the initialisation, the state should be with no front (at infinity)
+    pre_init_state = map(base_state) do f
+        f .+ 1e-8 * (rand(size(f)) .- 0.5)
+    end
     
     forcing = create_forcings(base_state, sp)
     # Closure as usual
@@ -46,7 +45,8 @@ include("closure.jl")
         tracers = (:b, ),
         buoyancy = BuoyancyTracer(),
         boundary_conditions,
-        forcing
+        forcing, 
+        hydrostatic_pressure_anomaly=CenterField(grid)
     )
     @info model
     
@@ -59,7 +59,9 @@ include("closure.jl")
     
     u, v, w = model.velocities
     b = model.tracers.b
-    φ = model.pressures.pHY′ + model.pressures.pNHS
+    φ = model.pressures.pNHS + model.pressures.pHY′
+    νₑ = model.diffusivity_fields.νₑ
+    κₑ = model.diffusivity_fields.κₑ.b
     
     if !isdir("$output_folder")
         mkdir(output_folder)
@@ -73,7 +75,7 @@ include("closure.jl")
             with_halos=true
         )
     else
-        JLD2OutputWriter(model, (; u, v, w, b, φ); 
+        JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ, κₑ); 
             filename="$output_folder/initialisation.jld2", 
             schedule=TimeInterval(1/init_write_freq),
             overwrite_existing=true,
@@ -81,6 +83,7 @@ include("closure.jl")
         )
     end
     progress(sim) = print("Running turbulent initialisation $(round(100*time(sim) / sp.turbulence_spinup; digits=1))%\r")
+
     simulation.callbacks[:progress] = Callback(progress, IterationInterval(20))
     
     run!(simulation)

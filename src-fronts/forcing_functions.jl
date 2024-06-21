@@ -77,7 +77,7 @@ end
         )
         b_forcing = (
             Forcing(strain_forcing_b; discrete_form=true, parameters=(; α=strain_function)),
-            Relaxation(; rate, mask, target=(x, y, z, t)->base_state.b(x, y, z))
+            #Relaxation(; rate, mask, target=(x, y, z, t)->base_state.b(x, y, z))
         )
         u_forcing, v_forcing, w_forcing, b_forcing
     end
