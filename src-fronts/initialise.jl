@@ -103,7 +103,7 @@ include("closure.jl")
         w = Array(interior(model.velocities.w)),
         b = Array(interior(model.tracers.b))
         )
-    
+    #=
     # Remove the mean
     init_state = map(init_state) do init_field
         init_field .-= mean(init_field; dims=2)
@@ -115,6 +115,7 @@ include("closure.jl")
     init_state.v .+= base_state.v
     init_state.w .+= base_state.w
     init_state.b .+= base_state.b
+    =#
     return init_state
 end
 

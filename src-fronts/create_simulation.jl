@@ -25,7 +25,7 @@ include("initialise.jl")
     # Run a simulation to create the initial state
     # Write
     @info "Generating an initialised state..."
-    init_state = initialise_simulation(sp; init_write_freq=10*sp.f)
+    init_state = initialise_simulation(sp; init_write_freq=5*sp.f)
     
     # For debugging initialisation just return here
     if run_time == 0

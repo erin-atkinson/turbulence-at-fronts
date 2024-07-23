@@ -40,7 +40,7 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5,
         
         Pr = 1
         
-        Lx = 5ℓ
+        Lx = 4ℓ
         # Down-front length should be such that the the grid cells are isotropic in horizontal
         Ly = Lx * Ny / Nx
         (; ip..., Lx, Ly, ℓ, N₀², B, λ, δ, ε, a, ν, Pr)
