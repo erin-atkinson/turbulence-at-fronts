@@ -1,4 +1,5 @@
 using SpecialFunctions
+using OffsetArrays: no_offset_view
 
 @inline g(s) = s < 0 ? 0 : sqrt(1 + s^2) - 1
 #@inline g(s) = log(1 + exp(s))
@@ -44,7 +45,7 @@ layer height providing the
 end
 =#
 # This one is more complicated, so it's going to return an array
-@inline function get_base_state_front(grid, simulation_parameters)
+@inline function get_base_state_front(grid, simulation_parameters; with_halos=false)
     sp = simulation_parameters
     @inline h(x) = sp.H * γ(x/sp.ℓ, sp.δ)
     @inline h′(x) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
@@ -56,10 +57,10 @@ end
     M²(x, z) = (b(x+5e-8, z) - b(x-5e-8, z)) / 1e-7
     
     # Now compute the appropriate velocity
-    xsᶜ, ysᶜ, zsᶜ = nodes(grid, Center(), Center(), Center())
-    xsᶠ, ysᶠ, zsᶠ = nodes(grid, Face(), Face(), Face())
-    vs = cumsum([(zsᶜ[i] - zsᶜ[max(i-1, 1)]) * M²(x, z) / sp.f for x in xsᶜ, y in 1:1, (i, z) in enumerate(zsᶜ)]; dims=3)
-    vs = repeat(vs, 1, length(ysᶠ), 1)
+    xsᶜ, ysᶜ, zsᶜ = nodes(grid, Center(), Center(), Center(); with_halos)
+    xsᶠ, ysᶠ, zsᶠ = nodes(grid, Face(), Face(), Face(); with_halos)
+    (xsᶜ, ysᶜ, zsᶜ, xsᶠ, ysᶠ, zsᶠ) = no_offset_view.((xsᶜ, ysᶜ, zsᶜ, xsᶠ, ysᶠ, zsᶠ))
+    vs = cumsum([(zsᶜ[i] - zsᶜ[max(i-1, 1)]) * M²(x, z) / sp.f for x in xsᶜ, y in ysᶜ, (i, z) in enumerate(zsᶜ)]; dims=3)
     bs = [b(x, z) for x in xsᶜ, y in ysᶜ, z in zsᶜ]
     return (; u=zeros(length(xsᶠ), length(ysᶜ), length(zsᶜ)), w=zeros(length(xsᶜ), length(ysᶜ), length(zsᶠ)), v=vs, b=bs)
 end

@@ -20,10 +20,11 @@ include("create_simulation.jl")
         [08]: Maximum Rossby number of front
         [09]: Minimum Richardson number of front
         [10]: Strain rate in 1/seconds
-        [11]: Surface buoyancy loss (positive for cooling) in watts / sq. metre
-        [12]: Sponge layer damping multiplier
-        [13]: Sponge layer damping size relative to front
-        [14]: Cooling spin-up duration
+        [11]: Ekman number
+        [12]: Surface buoyancy loss (positive for cooling) in watts / sq. metre
+        [13]: Sponge layer damping multiplier
+        [14]: Sponge layer damping size relative to front
+        [15]: Cooling spin-up duration
 
     The simulation is run with only surface cooling to generate initial fluctuation fields,
     then these are combined with a mean reference front generated to satisfy the given non-dimensional parameters.
@@ -42,12 +43,13 @@ Nz = Meta.parse(ARGS[7])
 Ro = Meta.parse(ARGS[8])
 Ri = Meta.parse(ARGS[9])
 α = Meta.parse(ARGS[10])
-Q = Meta.parse(ARGS[11])
-c = Meta.parse(ARGS[12])
-damping_frac = Meta.parse(ARGS[13])
-turbulence_spinup = Meta.parse(ARGS[14])
+Ek = Meta.parse(ARGS[11])
+Q = Meta.parse(ARGS[12])
+c = Meta.parse(ARGS[13])
+damping_frac = Meta.parse(ARGS[14])
+turbulence_spinup = Meta.parse(ARGS[15])
 
-simulation_parameters = (; f, H, Nx, Ny, Nz, Ro, Ri, α, Q, c, damping_frac, turbulence_spinup)
+simulation_parameters = (; f, H, Nx, Ny, Nz, Ro, Ri, α, Q, c, damping_frac, turbulence_spinup, Ek)
 
 simulation = create_simulation(run_time, output_folder, simulation_parameters)
 run!(simulation)

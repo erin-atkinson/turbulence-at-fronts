@@ -1,10 +1,10 @@
 include("base_state.jl")
 
-default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5, Q=0, c=0.5, damping_frac=0.5, turbulence_spinup=1e4)
+default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5, Q=0, c=0.5, damping_frac=0.5, turbulence_spinup=1e4, Ek=0)
 
 @inline function create_simulation_parameters(input_parameters=(; ))
     ip = (; default_inputs..., input_parameters...)
-    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q
+    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q, Ek=ip.Ek
         # Velocity scale
         U = 0.1
         # Mixed layer depth change
@@ -27,7 +27,7 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5,
         
         # Refine the guess of a?
         
-        
+        ν = Ek * f * H
         # Thermal properties of water
         α = 2.0678e-4 # K⁻¹
         cₚ = 4.1819e3 # J kg⁻¹ K⁻¹
@@ -38,10 +38,12 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5,
         # Buoyancy flux
         B = α * g * Q / (cₚ * ρ)
         
-        Lx = 10ℓ
+        Pr = 1
+        
+        Lx = 5ℓ
         # Down-front length should be such that the the grid cells are isotropic in horizontal
         Ly = Lx * Ny / Nx
-        (; ip..., Lx, Ly, ℓ, N₀², B, λ, δ, ε, a)
+        (; ip..., Lx, Ly, ℓ, N₀², B, λ, δ, ε, a, ν, Pr)
     end
 end
 

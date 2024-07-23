@@ -12,8 +12,6 @@ include("closure.jl")
 
 @inline function initialise_simulation(simulation_parameters; init_write_freq=0)
     
-    # To initialise first spin up the strain then the turbulence?
-    
     # Spin up the turbulence
     sp = (simulation_parameters..., α=0)
     
@@ -28,9 +26,12 @@ include("closure.jl")
     )
     base_state = get_base_state(grid, sp)
     # For the sake of the initialisation, the state should be with no front (at infinity)
-    pre_init_state = map(base_state) do f
-        f .+ 1e-8 * (rand(size(f)) .- 0.5)
-    end
+    pre_init_state = (;
+        u=base_state.u .+ 1e-5 * (rand(size(base_state.u)...) .- 0.5),
+        w=base_state.w .+ 1e-6 * (rand(size(base_state.w)...) .- 0.5),
+        base_state.v,
+        base_state.b
+    )
     
     forcing = create_forcings(base_state, sp)
     # Closure as usual
@@ -49,7 +50,6 @@ include("closure.jl")
         hydrostatic_pressure_anomaly=CenterField(grid)
     )
     @info model
-    
     # Set the model state to the pre-initialisation state
     set!(model; pre_init_state...)
     
@@ -60,8 +60,7 @@ include("closure.jl")
     u, v, w = model.velocities
     b = model.tracers.b
     φ = model.pressures.pNHS + model.pressures.pHY′
-    νₑ = model.diffusivity_fields.νₑ
-    κₑ = model.diffusivity_fields.κₑ.b
+    νₑ = sp.Ek == 0 ? model.diffusivity_fields.νₑ : model.diffusivity_fields[2].νₑ
     
     if !isdir("$output_folder")
         mkdir(output_folder)
@@ -75,7 +74,7 @@ include("closure.jl")
             with_halos=true
         )
     else
-        JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ, κₑ); 
+        JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ); 
             filename="$output_folder/initialisation.jld2", 
             schedule=TimeInterval(1/init_write_freq),
             overwrite_existing=true,
@@ -112,10 +111,10 @@ include("closure.jl")
     #@info  "init_state sizes = $(map(size, init_state))"
     #@info  "grid sizes = $(size(xsᶠᶜᶜ)), $(size(zsᶜᶜᶠ)), $(size(xsᶜᶜᶜ)), $(size(zsᶜᶜᶜ))"
     # Add the reference state
-    init_state.u .+= [base_state.u(x, 0, z) for x in xsᶠᶜᶜ, y in [1], z in zsᶜᶜᶜ]
-    init_state.v .+= [base_state.v(x, 0, z) for x in xsᶜᶜᶜ, y in [1], z in zsᶜᶜᶜ]
-    init_state.w .+= [base_state.w(x, 0, z) for x in xsᶜᶜᶜ, y in [1], z in zsᶜᶜᶠ]
-    init_state.b .+= [base_state.b(x, 0, z) for x in xsᶜᶜᶜ, y in [1], z in zsᶜᶜᶜ]
+    init_state.u .+= base_state.u
+    init_state.v .+= base_state.v
+    init_state.w .+= base_state.w
+    init_state.b .+= base_state.b
     return init_state
 end
 

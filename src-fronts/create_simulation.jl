@@ -18,9 +18,8 @@ include("initialise.jl")
         mkdir(output_folder)
     end
     jldopen("$output_folder/parameters.jld2", "w") do file
-        for key in keys(sp)
-            file[string(key)] = sp[key]
-        end
+        file["simulation"] = sp
+        file["run_time"] = run_time
     end
     
     # Run a simulation to create the initial state
@@ -74,8 +73,8 @@ include("initialise.jl")
     #pNHS = model.pressures.pNHS
     φ = model.pressures.pHY′ + model.pressures.pNHS
     νₑ = model.diffusivity_fields.νₑ
-    κₑ = model.diffusivity_fields.κₑ
-    simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ, κₑ); 
+    #κₑ = model.diffusivity_fields.κₑ.b
+    simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, φ, νₑ); 
         filename="$output_folder/output.jld2", 
         schedule=TimeInterval(sp.write_freq),
         overwrite_existing=true,
