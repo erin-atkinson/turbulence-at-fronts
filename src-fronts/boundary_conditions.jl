@@ -19,6 +19,8 @@ using Oceananigans.Operators
     
     
     =#
+    b_func = get_base_state_function(simulation_parameters).b
+    
     w_bcs=FieldBoundaryConditions(;
         east=ValueBoundaryCondition(0),
         west=ValueBoundaryCondition(0),
@@ -32,10 +34,10 @@ using Oceananigans.Operators
         )
     else
         FieldBoundaryConditions(;
-            east=ValueBoundaryCondition((y, z, t, b)->b(Lx/2, y, z); parameters=base_state.b),
-            west=ValueBoundaryCondition((y, z, t, b)->b(-Lx/2, y, z); parameters=base_state.b),
             bottom=GradientBoundaryCondition(simulation_parameters.N₀²),
-            top=FluxBoundaryCondition(simulation_parameters.B)
+            top=FluxBoundaryCondition(simulation_parameters.B),
+            west=ValueBoundaryCondition((y, z, t)->b_func(-Lx/2, z)),
+            east=ValueBoundaryCondition((y, z, t)->b_func(Lx/2, z))
         )
     end
     

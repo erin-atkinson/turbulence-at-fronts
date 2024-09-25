@@ -38,7 +38,7 @@ w_series = FieldTimeSeries("$foldername/$input_file.jld2", "w"; backend=OnDisk()
 
 b_series = FieldTimeSeries("$foldername/$input_file.jld2", "b"; backend=OnDisk())
 
-φ_series = FieldTimeSeries("$foldername/$input_file.jld2", "φ"; backend=OnDisk())
+ϕ_series = FieldTimeSeries("$foldername/$input_file.jld2", "φ"; backend=OnDisk())
 
 #ν_series = FieldTimeSeries("$foldername/$input_file.jld2", "ν"; backend=OnDisk())
 
@@ -48,15 +48,16 @@ w = w_series[1]
 
 b = b_series[1]
 
-φ = φ_series[1]
+ϕ = ϕ_series[1]
 
+t = [0]
 #ν = ν_series[1]
 #=
 @info u
 @info v
 @info w
 @info b
-@info φ
+@info ϕ
 @info ν
 =#
 grid, iters, ts = jldopen("$foldername/$input_file.jld2") do file
@@ -64,8 +65,8 @@ grid, iters, ts = jldopen("$foldername/$input_file.jld2") do file
     file["serialized/grid"], iters, [file["timeseries/t/$iter"] for iter in iters]
 end
 
-sp, run_time = jldopen("$foldername/parameters.jld2") do file
-    file["simulation"], file["run_time"]
+sp = jldopen("$foldername/parameters.jld2") do file
+    file["simulation"]
 end
 
 # Include script file which should define a named tuple of outputs, temp_outputs (which are deleted after)
@@ -86,8 +87,9 @@ for (i, iter) in enumerate(iters)
 
     b .= b_series[i]
 
-    φ .= φ_series[i]
-
+    ϕ .= ϕ_series[i]
+    
+    t .= [ts[i]]
     #ν .= ν_series[i]
     update_outputs!(outputs)
     write_outputs(filename, outputs, iter)

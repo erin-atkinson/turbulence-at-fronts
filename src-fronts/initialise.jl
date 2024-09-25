@@ -33,6 +33,11 @@ include("closure.jl")
         base_state.b
     )
     
+    if sp.turbulence_spinup == 0
+        @info "No turbulence spinup period specified, skipping init"
+        return pre_init_state
+    end
+    
     forcing = create_forcings(base_state, sp)
     # Closure as usual
     closure = create_closure(xs, ys, zs, base_state, sp)
@@ -96,7 +101,7 @@ include("closure.jl")
     xsᶜᶜᶜ = Array(xnodes(grid, Center(), Center(), Center()))
     zsᶜᶜᶜ = Array(znodes(grid, Center(), Center(), Center()))
     
-    # Return the initialised fields, with the front added
+    # Return the initialised fields
     init_state = CUDA.@allowscalar (;
         u = Array(interior(model.velocities.u)), 
         v = Array(interior(model.velocities.v)),
