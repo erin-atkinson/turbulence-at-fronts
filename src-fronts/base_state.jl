@@ -1,3 +1,6 @@
+# base_state.jl
+# Functions describing the initial state of the simulations
+
 using SpecialFunctions
 using OffsetArrays: no_offset_view
 
@@ -58,6 +61,13 @@ end
     bs = [b(x, z) for x in xs, z in zs]
     
     return (; xs, zs, u=(x, y, z)->0, w=(x, y, z)->0, v=vs, b=bs)
+end
+
+@inline h(x, sp) = sp.H * γ(x/sp.ℓ, sp.δ)
+@inline h′(x, sp) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
+
+@inline function base_b_func(x, z, sp)
+    sp.N₀² * (z -(1-sp.ε) * sp.λ * sp.H * g((z - h(x + sp.a * (z + sp.H/2), sp))/(sp.λ * sp.H)))
 end
 
 @inline function get_base_state_function(simulation_parameters)

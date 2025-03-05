@@ -1,10 +1,11 @@
-include("base_state.jl")
+# parameters.jl
+# Creating some numbers for use later...
 
 default_inputs = (; f=1e-4, H=100, Nx=200, Nₕ=100, Ny=200, Nz=50, Ro=0.1, Ri=2, α=1e-5, Q=0, c=0.5, damping_frac=0.5, turbulence_spinup=1e4, Ek=0, )
 
 @inline function create_simulation_parameters(input_parameters=(; ))
     ip = (; default_inputs..., input_parameters...)
-    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, Nz=ip.Nz, H=ip.H, Q=ip.Q, Ek=ip.Ek, Nₕ=ip.Nₕ, α=ip.α
+    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, Nz=ip.Nz, H=ip.H, Q=ip.Q, Ek=ip.Ek, Nₕ=ip.Nₕ, α=ip.α, damping_frac=ip.damping_frac, c=ip.c
         # Velocity scale
         U = 0.1
         # Mixed layer depth change
@@ -49,10 +50,13 @@ default_inputs = (; f=1e-4, H=100, Nx=200, Nₕ=100, Ny=200, Nz=50, Ro=0.1, Ri=2
         Ly = Lₕ * Ny / Nₕ
         Lz = 1.2H
         
-        #νₕ = 0.1 * max(α, f / 10) * Lₕ^2 / (4Nₕ^2)
-        #νᵥ = νₕ * (H * Nₕ / (Lₕ * Nz))^2
+        νₕ = 1e-12
+        νᵥ = νₕ * (H * Nₕ / (Lₕ * Nz))^2
         
-        (; ip..., Lx, Lₕ, Ly, Lz, ℓ, N₀², B, λ, δ, ε, a, ν, Pr)
+        damping_width = damping_frac * ℓ
+        damping_rate = c * N₀² / (2π)
+        
+        (; ip..., Lx, Lₕ, Ly, Lz, ℓ, N₀², B, λ, δ, ε, a, νₕ, νᵥ, Pr, damping_width, damping_rate)
     end
 end
 

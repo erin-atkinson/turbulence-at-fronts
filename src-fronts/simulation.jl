@@ -1,7 +1,7 @@
 ENV["JULIA_SCRATCH_TRACK_ACCESS"] = 0
 
 using Oceananigans
-include("create_simulation.jl")
+
 
 #= 
     Create a simulation of a front forced by strain flow and surface cooling
@@ -33,21 +33,22 @@ include("create_simulation.jl")
 =#
 output_folder = ARGS[1]
 
-run_time = Meta.parse(ARGS[2])
-f = Meta.parse(ARGS[3])
-H = Meta.parse(ARGS[4])
-Nx = Meta.parse(ARGS[5])
-Nₕ = Meta.parse(ARGS[6])
-Ny = Meta.parse(ARGS[7])
-Nz = Meta.parse(ARGS[8])
-Ro = Meta.parse(ARGS[9])
-Ri = Meta.parse(ARGS[10])
-α = Meta.parse(ARGS[11])
-Q = Meta.parse(ARGS[12])
-c = Meta.parse(ARGS[13])
-damping_frac = Meta.parse(ARGS[14])
-start_time = Meta.parse(ARGS[15])
+run_time = parse(Float64, ARGS[2])
+f = parse(Float64, ARGS[3])
+H = parse(Float64, ARGS[4])
+Nx = parse(Int64, ARGS[5])
+Nₕ = parse(Int64, ARGS[6])
+Ny = parse(Int64, ARGS[7])
+Nz = parse(Int64, ARGS[8])
+Ro = parse(Float64, ARGS[9])
+Ri = parse(Float64, ARGS[10])
+α = parse(Float64, ARGS[11])
+Q = parse(Float64, ARGS[12])
+c = parse(Float64, ARGS[13])
+damping_frac = parse(Float64, ARGS[14])
+start_time = parse(Float64, ARGS[15])
+save_time = parse(Float64, ARGS[16])
 
-simulation_parameters = (; run_time, f, H, Nx, Nₕ, Ny, Nz, Ro, Ri, α, Q, c, damping_frac, start_time)
+simulation_parameters = (; run_time, f, H, Nx, Nₕ, Ny, Nz, Ro, Ri, α, Q, c, damping_frac, start_time, save_time)
 
-create_simulation(output_folder, simulation_parameters)
+include("create_simulation.jl")

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
-#SBATCH --time=4:30:00
-#SBATCH --job-name=ppStrain
-#SBATCH --output=../scratch/logs/ppStrain.txt
+#SBATCH --time=3:30:00
+#SBATCH --job-name=ppNoStrain
+#SBATCH --output=../scratch/logs/ppNoStrain.txt
 
 module load julia/1.10.4
 export JULIA_DEPOT_PATH=~/.julia-niagara
@@ -15,11 +15,11 @@ mkdir $RAM
 cd ~/Project
 
 # Location of output.jld2
-export SIM_OUTPUT_FOLDER=../scratch/Project/Strain
+export SIM_OUTPUT_FOLDER=../scratch/Project/NoCooling
 
 #julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER DFM $RAM o
-#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER PV $RAM o
-julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER ENERGY $RAM o
-#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER DIV $RAM o
+julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER PV $RAM o
+#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER ENERGY $RAM o
+#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER PVSILLY $RAM o
 
 rm $RAM -rf

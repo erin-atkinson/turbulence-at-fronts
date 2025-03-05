@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
-#SBATCH --time=20:30:00
+#SBATCH --time=24:00:00
 #SBATCH --job-name=Strain
 #SBATCH --output=../scratch/logs/Strain.txt
 #module load cuda/11.7
@@ -11,7 +11,7 @@ export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/Project
 
 output_path=../scratch/Project/Strain
-run_time="1e6"
+run_time="2e5"
 f="1e-4"
 H="100"
 Nx=1350
@@ -22,8 +22,9 @@ Ro="0.4"
 Ri="2.0"
 alpha="1e-5"
 Q="100"
-c="3"
-damping_width="1"
-start_time="-2e5"
+c="0.5"
+damping_width="3"
+start_time="-4e5"
+save_time="1e3"
 
-julia -t 8 -- src-fronts/simulation.jl $output_path $run_time $f $H $Nx $Nh $Ny $Nz $Ro $Ri $alpha $Q $c $damping_width $start_time
+julia -t 8 -- src-fronts/simulation.jl $output_path $run_time $f $H $Nx $Nh $Ny $Nz $Ro $Ri $alpha $Q $c $damping_width $start_time $save_time

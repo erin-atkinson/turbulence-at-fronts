@@ -1,3 +1,6 @@
+# grid_cells.jl
+# Some functions to calculate the variable spaced grid
+
 @inline function x_faces(Nx, Nₕ, Lₕ, Lx, ℓ)
     Δx = Lₕ / Nₕ
     Nl = (Nx - Nₕ) ÷ 2

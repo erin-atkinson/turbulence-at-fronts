@@ -38,7 +38,7 @@ w_series = FieldTimeSeries("$foldername/$input_file.jld2", "w"; backend=OnDisk()
 
 b_series = FieldTimeSeries("$foldername/$input_file.jld2", "b"; backend=OnDisk())
 
-ϕ_series = FieldTimeSeries("$foldername/$input_file.jld2", "φ"; backend=OnDisk())
+p_series = FieldTimeSeries("$foldername/$input_file.jld2", "p"; backend=OnDisk())
 
 #ν_series = FieldTimeSeries("$foldername/$input_file.jld2", "ν"; backend=OnDisk())
 
@@ -48,9 +48,9 @@ w = w_series[1]
 
 b = b_series[1]
 
-ϕ = ϕ_series[1]
+p = p_series[1]
 
-t = [0]
+t = [0.0]
 #ν = ν_series[1]
 #=
 @info u
@@ -80,14 +80,14 @@ filename = buffer == nothing ? "$foldername/$scriptname.jld2" : "$buffer/$script
 temp_filename = buffer == nothing ? "$foldername/temp_$scriptname.jld2" : "$buffer/temp_$scriptname.jld2"
 
 for (i, iter) in enumerate(iters)
-    print("Computing $iter\r")
+    print("Computing $i/$(length(iters))\r")
     u .= u_series[i]
     v .= v_series[i]
     w .= w_series[i]
 
     b .= b_series[i]
 
-    ϕ .= ϕ_series[i]
+    p .= p_series[i]
     
     t .= [ts[i]]
     #ν .= ν_series[i]
