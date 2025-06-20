@@ -1,109 +1,126 @@
 using Oceananigans
 using JLD2
 
-foldername = ARGS[1]
-scriptname = ARGS[2]
-# Might use a lot of IO
-buffer = ARGS[3]
-opts = ARGS[4]
+using Oceananigans.Fields: AbstractField
+using Oceananigans.Utils: SumOfArrays
+using Oceananigans: fill_halo_regions!
 
-input_file = occursin("i", opts) ? "initialisation" : "output"
-macro postpostprocess() end
-temp_outputs = (; )
-
-function write_grid_times(grid, frames, ts, path)
-    jldopen(path, "a") do file
-        for (i, frame) in enumerate(frames)
-            file["timeseries/t/$frame"] = ts[i]
-        end
-        # Now copy over grid things so Oceananigans isn't needed
-        for k in fieldnames(typeof(grid))
-            file["grid/$k"] = getproperty(grid, k)
-        end
-    end
+function update_field!(field, fieldtimeseries, frame)
+    parent(field) .= parent(fieldtimeseries[frame])
     return nothing
 end
 
-function write_outputs(filename, outputs, iteration)
-    jldopen(filename, "a") do file
-        for (k, v) in zip(keys(outputs), outputs)
-            file["timeseries/$k/$iteration"] = v.data
-        end
-    end
+function update_fields!(fields, fieldstimeseries, clock, frame)
+    update_field!(fields.u, fieldstimeseries.u, frame)
+    update_field!(fields.v, fieldstimeseries.v, frame)
+    update_field!(fields.w, fieldstimeseries.w, frame)
+    update_field!(fields.b, fieldstimeseries.b, frame)
+    update_field!(fields.p, fieldstimeseries.p, frame)
+
+    compute_background!(fields.U, fields.V, fields.W, clock.time)
+    return nothing
 end
+
+function update_clock!(clock, iterations, times, frame)
+    clock.time = times[frame]
+    clock.iteration = iterations[frame]
+    clock.last_Δt = frame > 1 ? times[frame] - times[frame-1] : Inf
+    return nothing
+end
+
+function compute_fields_at!(dependency_fields, time)
+    compute_at!(dependency_fields, time)
+    return nothing
+end
+
+function write_outputs(filename, iteration, time, outputs)
+    data = map(parent, outputs)
+    jld2output!(filename, iteration, time, data)
+    return nothing
+end
+cleanup() = nothing
+
+read_grid(file) = file["serialized/grid"]
+read_iterations(file) = keys(file["timeseries/t"])
+read_times(file) = map(iteration -> file["timeseries/t/$iteration"], read_iterations(file))
+read_parameters(file) = file["simulation"]
+
+foldername = ARGS[1]
+scriptname = ARGS[2]
+
+# Possible third argument is a temporary location
+buffer = length(ARGS) > 2 ? ARGS[3] : ARGS[1]
+
+# Filenames
+inputfilename = joinpath(foldername, "output.jld2")
+outputfilename = joinpath(buffer, "$scriptname.jld2")
+tempfilename = joinpath(buffer, "temp_$scriptname.jld2")
+parameterfilename = joinpath(foldername, "parameters.jld2")
+
+finalfilename = joinpath(foldername, "$scriptname.jld2")
+
 @info "Reading timeseries from file"
-u_series = FieldTimeSeries("$foldername/$input_file.jld2", "u"; backend=OnDisk())
-v_series = FieldTimeSeries("$foldername/$input_file.jld2", "v"; backend=OnDisk())
-w_series = FieldTimeSeries("$foldername/$input_file.jld2", "w"; backend=OnDisk())
 
-b_series = FieldTimeSeries("$foldername/$input_file.jld2", "b"; backend=OnDisk())
+fieldsymbols = (; u=:u, v=:v, w=:w, b=:b, p=:p)
 
-p_series = FieldTimeSeries("$foldername/$input_file.jld2", "p"; backend=OnDisk())
+fieldstimeseries = map(fieldsymbols) do ξ
+    ξ_string = String(ξ)
+    FieldTimeSeries(inputfilename, ξ_string; backend=OnDisk())
+end
 
-#ν_series = FieldTimeSeries("$foldername/$input_file.jld2", "ν"; backend=OnDisk())
+fields = getindex.(fieldstimeseries, 1)
 
-u = u_series[1]
-v = v_series[1]
-w = w_series[1]
+include("terms/strainflow.jl")
+fields = merge(fields, (; U, V, W))
 
-b = b_series[1]
+# Initialise a clock
+clock = Clock(; time=0)
 
-p = p_series[1]
+grid = jldopen(read_grid, inputfilename)
+iterations = jldopen(read_iterations, inputfilename)
+times = jldopen(read_times, inputfilename)
+sp = jldopen(read_parameters, parameterfilename)
 
-t = [0.0]
-#ν = ν_series[1]
-#=
-@info u
-@info v
-@info w
-@info b
-@info ϕ
-@info ν
+frames = 1:length(iters)
+
+#= 
+Input Julia file should define some things:
+    `dependency_fields`:
+        Ordered collection of fields to call compute! on
+    `output_fields`:
+        NamedTuple of fields that will get saved. Note that these should also be in
+        `calculated_fields` if they need to be computed
+    `temp_fields`:
+        List of fields that will get saved temporarily. Note that these should also be in
+        `calculated_fields` if they need to be computed.
+    `cleanup`:
+        Function to be called before temp_fields is deleted
 =#
-grid, iters, ts = jldopen("$foldername/$input_file.jld2") do file
-    iters = keys(file["timeseries/t"])
-    file["serialized/grid"], iters, [file["timeseries/t/$iter"] for iter in iters]
-end
-
-sp = jldopen("$foldername/parameters.jld2") do file
-    file["simulation"]
-end
-
-# Include script file which should define a named tuple of outputs, temp_outputs (which are deleted after)
-# and a function called update_outputs!
 @info "Including $scriptname.jl"
 include("$scriptname.jl")
 
 @info outputs
 
-filename = buffer == nothing ? "$foldername/$scriptname.jld2" : "$buffer/$scriptname.jld2"
-temp_filename = buffer == nothing ? "$foldername/temp_$scriptname.jld2" : "$buffer/temp_$scriptname.jld2"
+# Write grid to file
+jldopen(file->saveproperty!(file, "grid", grid), filename, "a")
 
-for (i, iter) in enumerate(iters)
-    print("Computing $i/$(length(iters))\r")
-    u .= u_series[i]
-    v .= v_series[i]
-    w .= w_series[i]
+for (frame, iteration, time) in zip(frames, iterations, times)
+    print("Computing $i of $(frames[end])\r")
+    update_clock!(clock, iterations, times, frame)
+    update_fields!(fields, fieldstimeseries, clock, frame)
 
-    b .= b_series[i]
-
-    p .= p_series[i]
+    compute_fields_at!(dependency_fields, frame)
     
-    t .= [ts[i]]
-    #ν .= ν_series[i]
-    update_outputs!(outputs)
-    write_outputs(filename, outputs, iter)
-    write_outputs(temp_filename, temp_outputs, iter)
+    write_outputs(outputfilename, iteration, time, output_fields)
+    write_outputs(tempfilename, iteration, time, temp_fields)
 end
 println()
-write_grid_times(grid, iters, ts, filename)
 
-@postpostprocess
+cleanup()
 rm(temp_filename)
 
-if buffer != nothing
+if !isequal(outputfilename, finalfilename)
     @info "Moving from $buffer to $foldername"
-    mv(filename, "$foldername/$scriptname.jld2"; force=true)
+    mv(outputfilename, finalfilename; force=true)
 end
-
 @info "Finished!"

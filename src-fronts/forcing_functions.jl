@@ -1,147 +1,84 @@
-using Oceananigans
 using Oceananigans.Operators
+using CUDA: @allowscalar
 
-# Here we define fields that store the mean buoyancy profiles at the west and east, for forcing
-
-#b_west = Field{Nothing, Nothing, Center}(grid)
-#b_east = Field{Nothing, Nothing, Center}(grid)
-
-# Kernel functions that compute the above fields
-
-@inline function b_west_func(i, j, k, grid, b, sp)
-    # This is a reduction over i and j
-    # mean of b in the left of the outer domain
-    j_inds = 1:grid.Ny
-    
-    total = 0
-    
-    for _j in j_inds
-        total += @inbounds b[1, _j, k]
-    end
-    
-    return total / grid.Ny
+# ---------------------------------------
+# Quadratic damping
+@inline function sponge_layer(x, y, z)
+    s = min((z+sp.Lz) / (sp.Lz-sp.H), 1)
+    return (1 - abs(s))^2
 end
 
-@inline function b_east_func(i, j, k, grid, b, sp)
-    # This is a reduction over i and j
-    # mean of b in the right of the outer domain
-    j_inds = 1:grid.Ny
+# Damp b at the bottom towards a linear profile
+@inline function b_forcing_func(i, j, k, grid, clock, model_fields)
+    x = @inbounds grid.xᶜᵃᵃ[i]
+    y = @inbounds grid.yᵃᶜᵃ[j]
+    z = @inbounds grid.zᵃᵃᶜ[k]
     
-    total = 0
+    b = @inbounds model_fields.b[i, j, k]
+    tb = @inbounds model_fields.b[i, j, grid.Hz] + sp.N₀² * (z - grid.zᵃᵃᶜ[grid.Hz])
     
-    for _j in j_inds
-        total += @inbounds b[grid.Nx, _j, k]
-    end
-    
-    return total / grid.Ny
+    return sp.σ * (tb - b) * sponge_layer(x, y, z)
+end
+# ---------------------------------------
+
+# ---------------------------------------
+# Strain turns on slowly starting at t=0
+@inline function variable_strain_rate(t, α, f)
+    turnon = max(1-exp(-f * t / 15), 0)
+    return α * turnon
 end
 
-# Damping mask profile
-@inline σ₁(x) = abs(x) > 1 ? 0 : (1 - abs(x))^2
+# Background velocity fields
+U = Field{Face, Nothing, Nothing}(grid)
+V = Field{Nothing, Face, Nothing}(grid)
 
-@inline damping_shape_x(x) = (1 - σ₁((x-sp.Lx/2) / sp.damping_width)) * (1 - σ₁((x+sp.Lx/2) / sp.damping_width))
-@inline velocity_mask(x, y, z) = abs(1 - damping_shape_x(x) * (1 - σ₁((z+sp.Lz) / (sp.Lz-sp.H))))
-
-@inline b_west_mask(x) = σ₁((x+sp.Lx/2) / sp.damping_width)
-@inline b_east_mask(x) = σ₁((x-sp.Lx/2) / sp.damping_width)
-@inline b_bottom_mask(z) = abs(σ₁((z+sp.Lz) / (sp.Lz-sp.H)))
-
-# Strain turns on slowly
-@inline strain_function(t, x, α, f, ℓ) = -α * max(1 - exp(-f * t / 15), 0, 1) * (tanh((x-4ℓ) / ℓ) + tanh((-x-4ℓ) / ℓ)) / 2
-
-@inline function strain_forcing_u(i, j, k, grid, clock, model_fields, p)
-    
-    strain_rate = @inbounds strain_function(clock.time, grid.xᶠᵃᵃ[i], p.α, p.f, p.ℓ)
-    
-    ∂xu = ℑxᶠᵃᵃ(i, j, k, grid, ∂xᶜᶜᶜ, model_fields.u)
-    ∂yu = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, model_fields.u)
-    
-    return @inbounds strain_rate * (grid.xᶠᵃᵃ[i, j, k] * ∂xu - grid.yᵃᶜᵃ[i, j, k] * ∂yu + model_fields.u[i, j, k])
+# This is probably unnecessary
+Xs = Field{Face, Nothing, Nothing}(grid)
+Ys = Field{Nothing, Face, Nothing}(grid)
+@allowscalar begin 
+    Xs.data.parent[:, 1, 1] .= grid.xᶠᵃᵃ.parent
+    Ys.data.parent[1, :, 1] .= grid.yᵃᶠᵃ.parent
 end
 
-@inline function strain_forcing_v(i, j, k, grid, clock, model_fields, p)
+# U and V are calculated directly to avoid issues with boundary conditions
+@inline function calculate_UV_callback(simulation, sp)
+    t = simulation.model.clock.time
+    α = variable_strain_rate(t, sp.α, sp.f)
     
-    strain_rate = @inbounds strain_function(clock.time, grid.xᶜᵃᵃ[i], p.α, p.f, p.ℓ)
+    # Need to bypass periodic halo
+    U.data.parent .= -α * Xs.data.parent
+    V.data.parent .= α * Ys.data.parent
     
-    ∂xv = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶠᶜ, model_fields.v)
-    ∂yv = ℑyᵃᶠᵃ(i, j, k, grid, ∂yᶜᶜᶜ, model_fields.v)
-    
-    return @inbounds strain_rate * (grid.xᶜᵃᵃ[i, j, k] * ∂xv - grid.yᵃᶠᵃ[i, j, k] * ∂yv - model_fields.v[i, j, k])
+    return nothing
 end
+# ---------------------------------------
 
-@inline function strain_forcing_w(i, j, k, grid, clock, model_fields, p)
-    
-    strain_rate = @inbounds strain_function(clock.time, grid.xᶜᵃᵃ[i], p.α, p.f, p.ℓ)
-    
-    ∂xw = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶠ, model_fields.w)
-    ∂yw = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶠ, model_fields.w)
-    
-    return @inbounds strain_rate * (grid.xᶜᵃᵃ[i, j, k] * ∂xw - grid.yᵃᶜᵃ[i, j, k] * ∂yw)
-end
+# ---------------------------------------
+# Background velocity
+@inline αv_func(x, y, z, t, v) = -variable_strain_rate(t, sp.α, sp.f) * v
+@inline αu_func(x, y, z, t, u) = variable_strain_rate(t, sp.α, sp.f) * u
+# ---------------------------------------
 
-@inline function strain_forcing_b(i, j, k, grid, clock, model_fields, p)
-    
-    strain_rate = @inbounds strain_function(clock.time, grid.xᶜᵃᵃ[i], p.α, p.f, p.ℓ)
-    
-    ∂xb = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶜ, model_fields.b)
-    ∂yb = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, model_fields.b)
-    
-    return @inbounds strain_rate * (grid.xᶜᵃᵃ[i, j, k] * ∂xb - grid.yᵃᶜᵃ[i, j, k] * ∂yb)
-end
-
-@inline function strain_forcing_ξ(i, j, k, grid, clock, model_fields, p)
-    
-    strain_rate = @inbounds strain_function(clock.time, grid.xᶜᵃᵃ[i], p.α, p.f, p.ℓ)
-    
-    ∂xξ = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶜ, model_fields.ξ)
-    ∂yξ = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, model_fields.ξ)
-    
-    return @inbounds strain_rate * (grid.xᶜᵃᵃ[i, j, k] * ∂xξ - grid.yᵃᶜᵃ[i, j, k] * ∂yξ)
-end
-
-# Velocities get damped to zero at the edge and bottom of the domain
+# ---------------------------------------
+# Combination of forcings
 u_forcing = (
-    Forcing(strain_forcing_u; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-    Relaxation(; rate=sp.damping_rate, mask=velocity_mask, target=(x, y, z, t)->0)
+    AdvectiveForcing(; u=U, v=V),
+    Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
+    Forcing(αu_func; field_dependencies=(:u, ))
 )
 v_forcing = (
-    Forcing(strain_forcing_v; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-    Relaxation(; rate=sp.damping_rate, mask=velocity_mask, target=(x, y, z, t)->0)
+    AdvectiveForcing(; u=U, v=V),
+    Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
+    Forcing(αv_func; field_dependencies=(:v, )),
 )
 w_forcing = (
-    Forcing(strain_forcing_w; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-    Relaxation(; rate=sp.damping_rate, mask=velocity_mask, target=(x, y, z, t)->0)
+    AdvectiveForcing(; u=U, v=V),
+    Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
 )
-
-# Buoyancy is damped to the mean profiles, and I need a seperate forcing function
-
-@inline function b_damping_func(i, j, k, grid, clock, model_fields, p)
-    # mean of b in the right of the outer domain
-    b_east = @inbounds p.b_east[1, 1, k]
-    east_rate = @inbounds p.damping_rate * abs(b_east_mask(grid.xᶜᵃᵃ[i]))
-    
-    b_west = @inbounds p.b_west[1, 1, k]
-    west_rate = @inbounds p.damping_rate * abs(b_west_mask(grid.xᶜᵃᵃ[i]))
-    
-    return @inbounds east_rate * (b_east - model_fields.b[i, j, k]) + west_rate * (b_west - model_fields.b[i, j, k])
-end
-
-#b_func = get_base_state_function(sp).b
-
 b_forcing = (
-    Forcing(strain_forcing_b; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-    Forcing(b_damping_func; discrete_form=true, parameters=(; b_east, b_west, sp.damping_rate)),
-    Relaxation(; rate=sp.damping_rate, mask=(x, y, z)->b_bottom_mask(z), target=(x, y, z, t)->base_b_func(x, z, sp))
+    AdvectiveForcing(; u=U, v=V),
+    Forcing(b_forcing_func; discrete_form=true)
 )
+# ---------------------------------------
 
-#=
-b_forcing = (
-    Forcing(strain_forcing_b; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-    Relaxation(; rate=sp.damping_rate, mask=(x, y, z)->b_bottom_mask(z), target=(x, y, z, t)->base_b_func(x, z, sp))
-)
-=#
-ξ_forcing = (
-    Forcing(strain_forcing_ξ; discrete_form=true, parameters=(; sp.α, sp.f, sp.ℓ)),
-)
-
-forcing = (; u=u_forcing, v=v_forcing, w=w_forcing, b=b_forcing, ξ=ξ_forcing)
+forcing = (; u=u_forcing, v=v_forcing, w=w_forcing, b=b_forcing)

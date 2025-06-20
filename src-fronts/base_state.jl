@@ -2,11 +2,10 @@
 # Functions describing the initial state of the simulations
 
 using SpecialFunctions
-using OffsetArrays: no_offset_view
+using Oceananigans: fill_halo_regions!
 
-@inline g(s) = s < 0 ? 0 : sqrt(1 + s^2) - 1
-#@inline g(s) = log(1 + exp(s))
-@inline G(s) = s < 0 ? 0 : 0.5 * (s * (-2 + sqrt(1 + s^2)) + asinh(s))
+#@inline g(s) = s < 0 ? 0 : sqrt(1 + s^2) - 1
+@inline g(s) = log(1 + exp(s))
 
 @inline γ(s, δ) = -1 + δ * (erf(s) + 1) / 2
 @inline γ′(s, δ) = δ * exp(-s^2) / sqrt(π)
@@ -14,82 +13,71 @@ using OffsetArrays: no_offset_view
     γ(s, δ) * (γ′(s+5e-7, δ) - γ′(s-5e-7, δ)) / 1e-6 + γ′(s, δ)^2
 end
 
-@inline B(H, a, ℓ, δ) = let h(x) = H * γ(x/ℓ, δ)
-    integrated_h(x) = h(x) - h(x + a*h(x+a*h(x+a*h(x+a*h(x+a*h(x+a*h(x))))))) # This is overkill
-    integrated_h′(x) = (integrated_h(x+5e-5ℓ) - integrated_h(x-5e-5ℓ)) / 1e-4ℓ
-    maximum(integrated_h′, range(-2ℓ, 2ℓ, 100))
+@inline mixed_layer_depth(x, sp) = sp.H * γ(x/sp.ℓ, sp.δ)
+
+# Actual bottom boundary is given by fixed point
+@inline h₀(x, sp) = h₀(x, sp, Val(10))
+@inline h₀(x, sp, ::Val{0}) = -sp.H
+@inline h₀(x, sp, ::Val{T}) where T = mixed_layer_depth(x + sp.a * (h₀(x, sp, Val(T-1)) + sp.H/2), sp)
+
+@inline function front_buoyancy(x, z, sp)
+    # Well-mixed, Ri achieved by tilting isopycnals
+    MLD = mixed_layer_depth(x + sp.a * (z + sp.H/2), sp)
+    return sp.N₀² * (z - sp.λ * sp.H * g((z - MLD)/(sp.λ * sp.H)))
 end
-# This one is more complicated, so it's going to return an array
-@inline function get_base_state_front(grid, simulation_parameters; with_halos=false)
-    sp = simulation_parameters
-    @inline h(x) = sp.H * γ(x/sp.ℓ, sp.δ)
-    @inline h′(x) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
-    @inline function b(x, z)
-        sp.N₀² * (z -(1-sp.ε) * sp.λ * sp.H * g((z - h(x + sp.a * (z + sp.H/2)))/(sp.λ * sp.H)))
+
+@inline function approximate_front_velocity(x, z, sp)
+    # We can approximate the velocity far above the thermocline (-(λ + δ)H << z)
+    MLD = mixed_layer_depth(x + sp.a * (z + sp.H/2), sp)
+    return sp.N₀² * (MLD - h₀(x, sp)) / sp.f / sp.a
+end
+
+@inline function approximate_front_vorticity(x, z, sp)
+    # We can approximate the velocity far above the thermocline (-(λ + δ)H << z)
+    return (approximate_front_velocity(x + 5e-6sp.ℓ, 0, sp) - approximate_front_velocity(x - 5e-6sp.ℓ, 0, sp)) / (1e-5sp.ℓ)
+end
+
+@inline function front_M²(x, z, sp)
+    return (front_buoyancy(x + 5e-6sp.ℓ, z, sp) - front_buoyancy(x - 5e-6sp.ℓ, z, sp)) / (1e-5sp.ℓ)
+end
+
+@inline front_shear(x, z, sp) = front_M²(x, z, sp) / sp.f
+    
+@inline function front_N²(x, z, sp)
+    return (front_buoyancy(x, z + 5e-6sp.H, sp) - front_buoyancy(x, z - 5e-6sp.H, sp)) / 1e-5sp.H
+end
+
+@inline front_Ri(x, z, sp) = front_N²(x, z, sp) / front_shear(x, z, sp)^2
+
+@inline function minimum_Ri(sp)
+    # Minimum Ri occurs in the centre of the front throughout the mixed layer
+    return minimum(x->front_Ri(x, 0, sp), range(-3sp.ℓ, 3sp.ℓ, 1000))
+end
+
+@inline function minimum_Ro(sp)
+    # Maximum Rossby number occurs at the surface
+    return minimum(range(-3sp.ℓ, 3sp.ℓ, 1000)) do x
+        approximate_front_vorticity(x, 0, sp) / sp.f
     end
-    
-    N²(x, z) = (b(x, z+5e-8) - b(x, z-5e-8)) / 1e-7
-    M²(x, z) = (b(x+5e-8, z) - b(x-5e-8, z)) / 1e-7
-    
-    # Now compute the appropriate velocity
-    begin
-        xsᶜ, ysᶜ, zsᶜ = nodes(grid, Center(), Center(), Center(); with_halos)
-        xsᶠ, ysᶠ, zsᶠ = nodes(grid, Face(), Face(), Face(); with_halos)
-        (xsᶜ, ysᶜ, zsᶜ, xsᶠ, ysᶠ, zsᶠ) = no_offset_view.((xsᶜ, ysᶜ, zsᶜ, xsᶠ, ysᶠ, zsᶠ))
-        vs = cumsum([(zsᶜ[i] - zsᶜ[max(i-1, 1)]) * M²(x, z) / sp.f for x in xsᶜ, y in ysᶜ, (i, z) in enumerate(zsᶜ)]; dims=3)
-        bs = [b(x, z) for x in xsᶜ, y in ysᶜ, z in zsᶜ]
-        return (; u=zeros(length(xsᶠ), length(ysᶜ), length(zsᶜ)), w=zeros(length(xsᶜ), length(ysᶜ), length(zsᶠ)), v=vs, b=bs)
-    end
 end
 
-@inline function get_base_state_front(simulation_parameters)
-    sp = simulation_parameters
-    @inline h(x) = sp.H * γ(x/sp.ℓ, sp.δ)
-    @inline h′(x) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
-    @inline function b(x, z)
-        sp.N₀² * (z -(1-sp.ε) * sp.λ * sp.H * g((z - h(x + sp.a * (z + sp.H/2)))/(sp.λ * sp.H)))
-    end
+@inline function front_initial_conditions(grid::RectilinearGrid, sp)
+    # Use Oceananigans fields to setup the initial thermal wind properly
     
-    N²(x, z) = (b(x, z+5e-8) - b(x, z-5e-8)) / 1e-7
-    M²(x, z) = (b(x+5e-8, z) - b(x-5e-8, z)) / 1e-7
+    b = Field{Center, Center, Center}(grid)
+    set!(b, (x, y, z)->front_buoyancy(x, z, sp))
+    fill_halo_regions!(b)
     
-    # Now compute the appropriate velocity
-    xs = range(-5sp.ℓ, 5sp.ℓ, 500)
-    zs = range(-sp.H, 0, 500)
+    B_op = @at (Center, Face, Center) ∂x(b) / sp.f
+    B_diff = compute!(Field(B_op))
+    # Compute the thermal wind shear
+    V_op = CumulativeIntegral(B_diff; dims=3)
+    v = compute!(Field(V_op))
+    fill_halo_regions!(v)
     
-    vs = cumsum([(zs[i] - zs[max(i-1, 1)]) * M²(x, z) / sp.f for x in xs, (i, z) in enumerate(zs)]; dims=2)
-    bs = [b(x, z) for x in xs, z in zs]
+    # Random secondary circulation
+    u(x, y, z) = 1e-14 * randn()
+    w(x, y, z) = 1e-14 * randn()
     
-    return (; xs, zs, u=(x, y, z)->0, w=(x, y, z)->0, v=vs, b=bs)
+    return (; u, v, w, b)
 end
-
-@inline h(x, sp) = sp.H * γ(x/sp.ℓ, sp.δ)
-@inline h′(x, sp) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
-
-@inline function base_b_func(x, z, sp)
-    sp.N₀² * (z -(1-sp.ε) * sp.λ * sp.H * g((z - h(x + sp.a * (z + sp.H/2), sp))/(sp.λ * sp.H)))
-end
-
-@inline function get_base_state_function(simulation_parameters)
-    sp = simulation_parameters
-    @inline h(x) = sp.H * γ(x/sp.ℓ, sp.δ)
-    @inline h′(x) = sp.H * γ′(x/sp.ℓ, sp.δ) / sp.ℓ
-    @inline function b(x, z)
-        sp.N₀² * (z -(1-sp.ε) * sp.λ * sp.H * g((z - h(x + sp.a * (z + sp.H/2)))/(sp.λ * sp.H)))
-    end
-    
-    #N²(x, z) = (b(x, z+5e-8) - b(x, z-5e-8)) / 1e-7
-    #M²(x, z) = (b(x+5e-8, z) - b(x-5e-8, z)) / 1e-7
-    
-    # Now compute the appropriate velocity
-    xs = range(-5sp.ℓ, 5sp.ℓ, 500)
-    zs = range(-sp.H, 0, 500)
-    
-    #vs = cumsum([(zs[i] - zs[max(i-1, 1)]) * M²(x, z) / sp.f for x in xs, (i, z) in enumerate(zs)]; dims=2)
-    #bs = [b(x, z) for x in xs, z in zs]
-    
-    return (; xs, zs, u=(x, y, z)->0, w=(x, y, z)->0, b)
-end
-
-@inline get_base_state(simulation_parameters) = get_base_state_front(simulation_parameters)
-@inline get_base_state(grid, simulation_parameters) = get_base_state_front(grid, simulation_parameters)
