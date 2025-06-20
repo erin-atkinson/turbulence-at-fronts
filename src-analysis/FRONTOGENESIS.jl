@@ -8,6 +8,8 @@ include("terms/frontogenesis/background_strain.jl")
 include("terms/frontogenesis/strain.jl")
 include("terms/frontogenesis/divergence.jl")
 include("terms/frontogenesis/shear.jl")
+include("terms/frontogenesis/tilting.jl")
+
 include("terms/frontogenesis/subgrid.jl")
 
 # Need to avoid computation of arguments of ∇bD∇bDt
@@ -19,6 +21,7 @@ background_strain = Field(KernelFunctionOperation{Center, Center, Center}(backgr
 strain = Field(KernelFunctionOperation{Center, Center, Center}(strain_func, grid, clock, fields, (; ), sp))
 shear = Field(KernelFunctionOperation{Center, Center, Center}(shear_func, grid, clock, fields, (; ), sp))
 divergence = Field(KernelFunctionOperation{Center, Center, Center}(divergence_func, grid, clock, fields, (; ), sp))
+tilting = Field(KernelFunctionOperation{Center, Center, Center}(tilting_func, grid, clock, fields, (; ), sp))
 
 # Subgrid terms
 subgrid = Field(KernelFunctionOperation{Center, Center, Center}(subgrid_func, grid, clock, fields, (; ), sp))
@@ -31,6 +34,7 @@ frontogenesis_fields = (;
     strain,
     shear,
     divergence,
+    tilting,
     subgrid
 )
 
@@ -41,6 +45,7 @@ frontogenesis_fields = (;
     strain_dfm,
     shear_dfm,
     divergence_dfm,
+    tilting_dfm,
     subgrid_dfm
 ) = dfm.(frontogenesis_fields)
 
@@ -51,6 +56,7 @@ frontogenesis_fields_dfm = (;
     strain_dfm,
     shear_dfm,
     divergence_dfm,
+    tilting_dfm,
     subgrid_dfm
 )
 
