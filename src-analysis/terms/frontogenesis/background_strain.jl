@@ -4,4 +4,4 @@
     by = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, fields.b)
     return α * (bx^2 - by^2)
 end
-strain_dependencies = ()
+strain_dependencies = (; )

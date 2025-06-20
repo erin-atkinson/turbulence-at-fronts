@@ -13,8 +13,4 @@
           + bz * ηz)
 end
 
-q_dependencies = (
-    :ηx,
-    :ηy,
-    :ηz
-)
+q_dependencies = ()
