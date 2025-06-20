@@ -10,9 +10,9 @@
     v_dfm = dependency_fields.v_dfm
     w_dfm = dependency_fields.w_dfm
 
-    U = dependency_fields.U
-    V = dependency_fields.V
-    W = dependency_fields.W
+    U = fields.U
+    V = fields.V
+    W = fields.W
 
     total_velocities = (; u = SumOfArrays{2}(u, U),
                         v = SumOfArrays{2}(v, V),

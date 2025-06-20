@@ -1,6 +1,6 @@
 @inline function DSP3D_func(i, j, k, grid, clock, fields, dependency_fields, sp)
 
-    α = variable_strain_rate(clock.time, sp.α, sp.f)
+    α = variable_strain_rate(clock.time)
 
     u = fields.u
     v = fields.v
@@ -8,8 +8,8 @@
     u_dfm = dependency_fields.u_dfm
     v_dfm = dependency_fields.v_dfm
 
-    U = dependency_fields.U
-    V = dependency_fields.V
+    U = fields.U
+    V = fields.V
 
     total_u = SumOfArrays{2}(U, u)
     total_v = SumOfArrays{2}(V, v)

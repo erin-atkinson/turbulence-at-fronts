@@ -8,7 +8,7 @@
     v_dfm = dependency_fields.v_dfm
     w_dfm = dependency_fields.w_dfm
 
-    W = dependency_fields.W
+    W = fields.W
     
     total_w = SumOfArrays{2}(w, W)
     
