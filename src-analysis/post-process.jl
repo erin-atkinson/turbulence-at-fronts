@@ -7,6 +7,8 @@ using Oceananigans: fill_halo_regions!
 
 using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
+prev_time = Int(time_ns())
+
 function update_field!(field, fieldtimeseries, frame)
     parent(field) .= parent(fieldtimeseries[frame])
     return nothing
@@ -109,8 +111,12 @@ include("$scriptname.jl")
 jldopen(file->saveproperty!(file, "grid", grid), outputfilename, "a")
 jldopen(file->saveproperty!(file, "grid", grid), tempfilename, "a")
 
+@info "Finished setup! Elapsed: $(round((Int(time_ns()) - prev_time)/1e9; digits=3))s"
+prev_time = Int(time_ns())
+start_time = Int(time_ns())
+
 for (frame, iteration, time) in zip(frames, iterations, times)
-    print("Computing $frame of $(frames[end])\r")
+    global prev_time = Int(time_ns())
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
 
@@ -118,6 +124,8 @@ for (frame, iteration, time) in zip(frames, iterations, times)
     
     write_outputs(outputfilename, iteration, time, output_fields)
     write_outputs(tempfilename, iteration, time, temp_fields)
+    new_time = Int(time_ns())
+    print("$frame of $(frames[end]), $(round((new_time - prev_time)/1e9; digits=3))s, avg: $(round((new_time - start_time)/(1e9frame); digits=3))s\r")
 end
 println()
 
