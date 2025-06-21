@@ -23,7 +23,7 @@
     return -α * ((uu - uu_dfm) - (vv - vv_dfm))
 end
 
-DSP_dependencies = (;
+DSP_dependencies = (
     :u_dfm,
     :v_dfm,
 )

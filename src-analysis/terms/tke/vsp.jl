@@ -31,7 +31,7 @@
     )
 end
 
-VSP_dependencies = (;
+VSP_dependencies = (
     :u_dfm,
     :v_dfm,
     :w_dfm

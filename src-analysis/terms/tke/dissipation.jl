@@ -22,10 +22,10 @@
     Fv = div_effective_Uv(i, j, k, grid, total_velocities, v)
     Fw = div_effective_Uw(i, j, k, grid, total_velocities, w)
     
-    return -(
-          (u - u_dfm) * Fu
-        + (v - v_dfm) * Fv
-        + (w - w_dfm) * Fw
+    return @inbounds -(
+          (u[i, j, k] - u_dfm[i, j, k]) * Fu
+        + (v[i, j, k] - v_dfm[i, j, k]) * Fv
+        + (w[i, j, k] - w_dfm[i, j, k]) * Fw
     )
 end
 

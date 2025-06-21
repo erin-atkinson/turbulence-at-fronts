@@ -4,4 +4,4 @@
     by = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, fields.b)
     return -δ * (bx^2 + by^2) / 2
 end
-divergence_dependencies = (; )
+divergence_dependencies = ()

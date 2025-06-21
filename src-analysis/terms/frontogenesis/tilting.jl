@@ -5,7 +5,7 @@
     bx = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶜ, fields.b)
     by = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, fields.b)
     bz = ℑzᵃᵃᶜ(i, j, k, grid, ∂zᶜᶜᶠ, fields.b)
-    return -2τ * bx * by
+    return -(bx * wx * bz + by * wy * bz)
 end
 
-tilting_dependencies = (; )
+tilting_dependencies = ()

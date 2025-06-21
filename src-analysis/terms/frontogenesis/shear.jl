@@ -7,4 +7,4 @@
     return -2τ * bx * by
 end
 
-shear_dependencies = (; )
+shear_dependencies = ()

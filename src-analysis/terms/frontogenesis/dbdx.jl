@@ -13,7 +13,7 @@ end
     by = ℑyᵃᶜᵃ(i, j, k, grid, ∂yᶜᶠᶜ, fields.b)
 
     # Difference with "current"
-    ∂∇b²∂t = @inbounds (bx^2 + by^2 - ∇b²[i, j, k]) / clock.prev_Δt
+    ∂∇b²∂t = @inbounds (bx^2 + by^2 - ∇b²[i, j, k]) / clock.last_Δt
 
     total_u = SumOfArrays{2}(fields.U, fields.u)
     total_v = SumOfArrays{2}(fields.V, fields.v)
@@ -26,4 +26,4 @@ end
     return (∂∇b²∂t - Fb) / 2
 end
 
-∇bD∇bDt_dependencies = (; )
+∇bD∇bDt_dependencies = ()

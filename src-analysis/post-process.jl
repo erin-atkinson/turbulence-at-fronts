@@ -32,8 +32,8 @@ function update_clock!(clock, iterations, times, frame)
     return nothing
 end
 
-function compute_fields_at!(dependency_fields, time)
-    compute_at!(dependency_fields, time)
+function compute_fields_at!(dependency_fields, frame)
+    compute_at!(dependency_fields, frame)
     return nothing
 end
 
@@ -104,19 +104,36 @@ Input Julia file should define some things:
 @info "Including $scriptname.jl"
 include("$scriptname.jl")
 
-@info dependency_fields
-@info output_fields
-
 # Write grid to file
 jldopen(file->saveproperty!(file, "grid", grid), outputfilename, "a")
 jldopen(file->saveproperty!(file, "grid", grid), tempfilename, "a")
 
-@info "Finished setup! Elapsed: $(round((Int(time_ns()) - prev_time)/1e9; digits=3))s"
-prev_time = Int(time_ns())
-start_time = Int(time_ns())
-
-for (frame, iteration, time) in zip(frames, iterations, times)
+function eltimestring()
+    str = string(round((Int(time_ns()) - prev_time)/1e9; digits=3), " s")
     global prev_time = Int(time_ns())
+    str
+end
+
+@info "Finished setup! Elapsed: $(eltimestring())"
+
+@info "Performing first computation..."
+print("Updating clock...\r")
+update_clock!(clock, iterations, times, frames[1])
+println("Updated clock! Elapsed: $(eltimestring())")
+
+print("Updating fields...\r")
+update_fields!(fields, fieldstimeseries, clock, frames[1])
+println("Updated fields! Elapsed: $(eltimestring())")
+
+map(keys(dependency_fields), dependency_fields) do k, dependency_field
+    print("Calculating $k...\r")
+    compute_at!(dependency_field, frames[1])
+    println("Calculated $(k)! Elapsed: $(eltimestring())")
+end
+
+start_time = Int(time_ns())
+prev_time = Int(time_ns())
+for (frame, iteration, time) in zip(frames, iterations, times)
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
 
@@ -124,8 +141,7 @@ for (frame, iteration, time) in zip(frames, iterations, times)
     
     write_outputs(outputfilename, iteration, time, output_fields)
     write_outputs(tempfilename, iteration, time, temp_fields)
-    new_time = Int(time_ns())
-    print("$frame of $(frames[end]), $(round((new_time - prev_time)/1e9; digits=3))s, avg: $(round((new_time - start_time)/(1e9frame); digits=3))s\r")
+    print("$frame of $(frames[end]), $(eltimestring()), avg: $(round((Int(time_ns()) - start_time)/(1e9frame); digits=3))s\r")
 end
 println()
 
