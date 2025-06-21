@@ -144,12 +144,12 @@ for (frame, iteration, time) in zip(frames, iterations, times)
     print("$frame of $(frames[end]), $(eltimestring()), avg: $(round((Int(time_ns()) - start_time)/(1e9frame); digits=3))s\r")
 end
 println()
-
 cleanup()
-rm(temp_filename)
 
 if !isequal(outputfilename, finalfilename)
     @info "Moving from $buffer to $foldername"
     mv(outputfilename, finalfilename; force=true)
 end
+rm(tempfilename)
+
 @info "Finished!"

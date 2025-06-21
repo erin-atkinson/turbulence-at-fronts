@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
-#SBATCH --time=2:30:00
+#SBATCH --time=0:45:00
 #SBATCH --job-name=ppDFM
 #SBATCH --output=../scratch/logs/ppDFM.txt
 
