@@ -47,7 +47,7 @@ frontogenesis_fields = (;
     divergence_dfm,
     tilting_dfm,
     subgrid_dfm
-) = dfm.(frontogenesis_fields)
+) = map(dfm, frontogenesis_fields)
 
 frontogenesis_fields_dfm = (;
     ∇bD∇bDt_dfm, 

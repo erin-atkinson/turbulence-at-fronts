@@ -26,7 +26,7 @@ TKE3D = Field(KernelFunctionOperation{Center, Center, Center}(TKE3D_func, grid, 
 
 TKE3D_fields = (; LSP3D, VSP3D, BFLUX3D, DSP3D, ε3D, TKE3D)
 
-(LSP, VSP, BFLUX, DSP, ε, TKE) = dfm.(TKE3D_fields)
+(LSP, VSP, BFLUX, DSP, ε, TKE) = map(dfm, TKE3D_fields)
 
 TKE_fields = (; LSP, VSP, BFLUX, DSP, ε, TKE)
 

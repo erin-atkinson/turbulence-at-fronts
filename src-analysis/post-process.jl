@@ -1,9 +1,11 @@
 using Oceananigans
 using JLD2
 
-using Oceananigans.Fields: AbstractField
+using Oceananigans.Fields: AbstractField, compute_at!
 using Oceananigans.Utils: SumOfArrays
 using Oceananigans: fill_halo_regions!
+
+using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
 function update_field!(field, fieldtimeseries, frame)
     parent(field) .= parent(fieldtimeseries[frame])
@@ -17,13 +19,13 @@ function update_fields!(fields, fieldstimeseries, clock, frame)
     update_field!(fields.b, fieldstimeseries.b, frame)
     update_field!(fields.p, fieldstimeseries.p, frame)
 
-    compute_background!(fields.U, fields.V, fields.W, clock.time)
+    compute_background!(fields.U, fields.V, fields.W, clock)
     return nothing
 end
 
 function update_clock!(clock, iterations, times, frame)
     clock.time = times[frame]
-    clock.iteration = iterations[frame]
+    clock.iteration = parse(Int, iterations[frame])
     clock.last_Δt = frame > 1 ? times[frame] - times[frame-1] : Inf
     return nothing
 end
@@ -35,10 +37,11 @@ end
 
 function write_outputs(filename, iteration, time, outputs)
     data = map(parent, outputs)
-    jld2output!(filename, iteration, time, data)
+    jld2output!(filename, iteration, time, data, (; ))
     return nothing
 end
 cleanup() = nothing
+temp_fields = (; )
 
 read_grid(file) = file["serialized/grid"]
 read_iterations(file) = keys(file["timeseries/t"])
@@ -68,10 +71,7 @@ fieldstimeseries = map(fieldsymbols) do ξ
     FieldTimeSeries(inputfilename, ξ_string; backend=OnDisk())
 end
 
-fields = getindex.(fieldstimeseries, 1)
-
-include("terms/strainflow.jl")
-fields = merge(fields, (; U, V, W))
+fields = map(x->x[1], fieldstimeseries)
 
 # Initialise a clock
 clock = Clock(; time=0)
@@ -81,7 +81,10 @@ iterations = jldopen(read_iterations, inputfilename)
 times = jldopen(read_times, inputfilename)
 sp = jldopen(read_parameters, parameterfilename)
 
-frames = 1:length(iters)
+include("terms/strainflow.jl")
+fields = merge(fields, (; U, V, W))
+
+frames = 1:length(iterations)
 
 #= 
 Input Julia file should define some things:
@@ -99,13 +102,15 @@ Input Julia file should define some things:
 @info "Including $scriptname.jl"
 include("$scriptname.jl")
 
-@info outputs
+@info dependency_fields
+@info output_fields
 
 # Write grid to file
-jldopen(file->saveproperty!(file, "grid", grid), filename, "a")
+jldopen(file->saveproperty!(file, "grid", grid), outputfilename, "a")
+jldopen(file->saveproperty!(file, "grid", grid), tempfilename, "a")
 
 for (frame, iteration, time) in zip(frames, iterations, times)
-    print("Computing $i of $(frames[end])\r")
+    print("Computing $frame of $(frames[end])\r")
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
 
