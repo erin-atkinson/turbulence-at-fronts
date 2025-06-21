@@ -76,7 +76,7 @@ end
 fields = map(x->x[1], fieldstimeseries)
 
 # Initialise a clock
-clock = Clock(; time=0)
+clock = Clock(; time=0.0)
 
 grid = jldopen(read_grid, inputfilename)
 iterations = jldopen(read_iterations, inputfilename)
