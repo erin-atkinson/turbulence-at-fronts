@@ -7,6 +7,7 @@ using Oceananigans: fill_halo_regions!
 
 using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
+initial_time = Int(time_ns())
 prev_time = Int(time_ns())
 
 function update_field!(field, fieldtimeseries, frame)
@@ -134,6 +135,8 @@ end
 start_time = Int(time_ns())
 prev_time = Int(time_ns())
 for (frame, iteration, time) in zip(frames, iterations, times)
+    # Reset counter after giving kernel functions chance to compile
+    frame == 11 && global setup_time = Int(time_ns())
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
 
@@ -141,7 +144,20 @@ for (frame, iteration, time) in zip(frames, iterations, times)
     
     write_outputs(outputfilename, iteration, time, output_fields)
     write_outputs(tempfilename, iteration, time, temp_fields)
-    print("$frame of $(frames[end]), $(eltimestring()), avg: $(round((Int(time_ns()) - start_time)/(1e9frame); digits=3))s\r")
+    progstring = if frame > 10
+        setupstr = round((setup_time - start_time)/1e9; digits=3)
+        
+        avg_time = (Int(time_ns()) - setup_time)/(1e9*(frame-10))
+        avgstr = round(avg_time; digits=3)
+        elapsed_time = round((Int(time_ns()) - initial_time)/1e9; digits=3)
+        total_time = round((setup_time - initial_time)/1e9 + avg_time * (length(frames) - 10); digits=3)
+        
+        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s, ", "avg: $(avgstr)s, ", "est: $(elapsed_time)s / $(total_time)s")
+    else
+        setupstr = round((Int(time_ns()) - start_time)/1e9; digits=3)
+        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s")
+    end
+    print(rpad(progstring, 80, ' '), "\r")
 end
 println()
 cleanup()
