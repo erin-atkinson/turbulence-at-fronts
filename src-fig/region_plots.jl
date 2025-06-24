@@ -28,17 +28,22 @@ function tke_by_region(
     region_scenes = (; arrest=fig[1, 2], total=fig[1, 1], )
 
     TKE = joinpath(foldername, "TKE.jld2")
+
+    Δm = 1.027e-3 * sp.Lh * sp.Lz * sp.Ly / (sp.Nh * sp.Nz)
+    Δt = 3600
+
     terms = map(regions) do region
         mask = [maskfromlines(x, z, region) for x in xsᶜ, z in zsᶜ]
         terms = map(term_names) do term_name
-            timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * 1e4
+            timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt
         end
     end
-
+    
     ax_kw = (;
         xlabel=L"t / \text{hr}",
-        ylabel=L"10^4\Delta E / \text{m}^2\text{s}^{-3}",
-        limits=(0, nothing, nothing, nothing)
+        ylabel=L"\Delta P / \text{MJ} \text{hr}^{-1}",
+        limits=(0, nothing, nothing, nothing),
+        ax_kw...
     )
     
     axeslns = map(region_names, region_scenes, terms) do title, scene, ys
@@ -46,12 +51,12 @@ function tke_by_region(
         (; ax, lns)
     end
 
-    Legend(fig[1, 3], axeslns.arrest.lns, term_labels, L"\Delta E")
+    Legend(fig[1, 3], axeslns.arrest.lns, term_labels, L"\Delta P")
     
     #hidexdecorations!(axeslns.arrest.ax; ticks=false, grid=false)
     #hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
     #hideydecorations!(axeslns.top.ax; ticks=false, grid=false)
-    hideydecorations!(axeslns.arrest.ax; ticks=false, grid=false, ticklabels=false)
+    hideydecorations!(axeslns.arrest.ax; ticks=false, grid=false)
     
     fig
 end
@@ -124,6 +129,72 @@ function frontogenesis_by_region(
     fig
 end
 
+function mean_frontogenesis_by_region(
+        foldername;
+        fig_kw=(; ), 
+        ax_kw=(; ),
+        ln_kw=(; )
+    )
+
+    iterations, times = iterations_times(foldername)
+    sp = simulation_parameters(foldername)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
+    inds = centre_indices(foldername)
+    
+    term_names = [
+        "background_strain_dfm",
+        "divergence_dfm",
+        "tilting_dfm",
+        "turbulence_h_dfm",
+        "turbulence_z_dfm",
+        "subgrid_dfm"
+    ]
+    term_labels = [
+        L"\alpha (b_{,x}^2 - b_{,y}^2)",
+        L"-\delta (b_{,x}^2 + b_{,y}^2)",
+        L"-(w_{,x}b_{,x} + w_{,y}b_{,y})b_{,z}",
+        L"\text{turbulence_x}",
+        L"\text{turbulence_z}",
+        L"\text{sgs}"
+    ]
+
+    # Plot in front and in arrest region
+    
+    fig = Figure(; size=(800, 250), fig_kw...)
+
+    region_scenes = (; arrest=fig[1, 2], total=fig[1, 1], )
+
+    TKE = joinpath(foldername, "MEANFRONTOGENESIS.jld2")
+    terms = map(regions) do region
+        mask = [maskfromlines(x, z, region) for x in xsᶜ, z in zsᶜ]
+        map(term_names) do term_name
+            filt(timeseries_of(a->1e14 * sum(mask .* a), TKE, term_name, iterations), 16)
+        end
+    end
+
+    ax_kw = (;
+        xlabel=L"t / \text{hr}",
+        ylabel=L"10^14\Delta / \text{m}^2\text{s}^{-3}",
+        limits=(0, nothing, nothing, nothing),
+        ax_kw...
+    )
+    
+    axeslns = map(region_names, region_scenes, terms) do title, scene, ys
+        ax, lns = plot_terms(scene, (; title, ax_kw...), ln_kw, times/3600, ys)
+        (; ax, lns)
+    end
+
+    Legend(fig[1, 3], axeslns.arrest.lns, term_labels; title=L"\Delta")
+    
+    #hidexdecorations!(axeslns.arrest.ax; ticks=false, grid=false)
+    #hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
+    #hideydecorations!(axeslns.top.ax; ticks=false, grid=false)
+    #hideydecorations!(axeslns.underneath.ax; ticks=false, grid=false)
+    hideydecorations!(axeslns.arrest.ax; ticks=false, grid=false, ticklabels=false)
+    
+    fig
+end
+
 TW(px, fv, u) = u .* (px + fv)
 TTW(px, fv, w′u′, u) = u .* (px + fv + w′u′)
 
@@ -139,29 +210,42 @@ function ubalance_by_region(
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
     inds = centre_indices(foldername)
     
-    term_labels = [L"-\overline{p}_{, x} + f\overline{v}", L"-\overline{p}_{, x} + f\overline{v} - w'u'_{, z}"]
+    term_names = [
+        "background_strain_dfm",
+        "pressure_dfm",
+        "coriolis_dfm",
+        "turbulence_h_dfm",
+        "turbulence_z_dfm",
+        "subgrid_dfm"
+    ]
+    term_labels = [
+        L"\alpha u^2",
+        L"fvu-p_x u",
+        L"\text{turbulence_x}",
+        L"\text{turbulence_z}",
+        L"\text{sgs}"
+    ]
 
-    fig = Figure(; size=(1000, 500), fig_kw...)
+    # Plot in front and in arrest region
+    
+    fig = Figure(; size=(800, 250), fig_kw...)
 
-    region_scenes = (; arrest=fig[1, 1], top=fig[1, 2], entrainment=fig[2, 1], underneath=fig[2, 2])
+    region_scenes = (; arrest=fig[1, 2], total=fig[1, 1], )
 
     UBALANCE = joinpath(foldername, "UBALANCE.jld2")
-    DFM = joinpath(foldername, "DFM.jld2")
-    
     terms = map(regions) do region
         mask = [maskfromlines(x, z, region) for x in xsᶠ, z in zsᶜ]
-        px = timeseries_of(a->sum(mask .* a) ./ sum(mask), UBALANCE, "px", iterations)
-        fv = timeseries_of(a->sum(mask .* a) ./ sum(mask), UBALANCE, "fv", iterations)
-        w′u′ = timeseries_of(a->sum(mask .* a) ./ sum(mask), UBALANCE, "w′u′", iterations)
-        [
-            timeseries_of(a->sum(TW(a...) .* mask) ./ sum(mask), [UBALANCE, UBALANCE, DFM], ["px", "fv", "u_dfm"], iterations),
-            timeseries_of(a->sum(TTW(a...) .* mask) ./ sum(mask), [UBALANCE, UBALANCE, UBALANCE, DFM], ["px", "fv", "w′u′", "u_dfm"], iterations)
-        ]
+        terms = map(term_names) do term_name
+            filt(timeseries_of(a->sum(mask .* a) * 1e9, UBALANCE, term_name, iterations), 1) ./ sum(mask)
+        end
+        [terms[1], filt(terms[2] + terms[3], 20), terms[4], terms[5], terms[6]]
     end
-
+    
     ax_kw = (;
         xlabel=L"t / \text{hr}",
-        ylabel=L"\Delta E / \text{m}^2\text{s}^{-3}"
+        ylabel=L"10^9 \Delta/ \text{m}\text{s}^{-2}",
+        limits=(0, 100, nothing, nothing),
+        ax_kw...
     )
     
     axeslns = map(region_names, region_scenes, terms) do title, scene, ys
@@ -169,12 +253,13 @@ function ubalance_by_region(
         (; ax, lns)
     end
 
-    Legend(fig[1:2, 3], axeslns.top.lns, term_labels; title=L"\Delta E")
+    Legend(fig[1, 3], axeslns.arrest.lns, term_labels; title=L"\Delta")
     
-    hidexdecorations!(axeslns.arrest.ax; ticks=false, grid=false)
-    hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
+    #hidexdecorations!(axeslns.arrest.ax; ticks=false, grid=false)
+    #hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
     #hideydecorations!(axeslns.top.ax; ticks=false, grid=false)
     #hideydecorations!(axeslns.underneath.ax; ticks=false, grid=false)
+    hideydecorations!(axeslns.arrest.ax; ticks=false, grid=false, ticklabels=false)
     
     fig
 end
