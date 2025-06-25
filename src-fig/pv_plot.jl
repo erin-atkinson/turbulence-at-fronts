@@ -27,7 +27,7 @@ function instability_plot(
     iterations = iterations[frames]
     times = times[frames]
 
-    Vq = timeseries_of(a->filt(a, σ), joinpath(foldername, "PV.jld2"), "Vq", iterations)
+    Vq = timeseries_of(a->filt(a, σ), joinpath(foldername, "PV.jld2"), "Vq_dfm", iterations)
     
     # Set each title
 

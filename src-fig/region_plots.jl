@@ -7,7 +7,8 @@ function plot_terms(scene, ax_kw, ln_kw, x, ys)
 end
 
 function tke_by_region(
-        foldername;
+        foldername,
+        frames=[];
         fig_kw=(; ), 
         ax_kw=(; ),
         ln_kw=(; )
@@ -19,7 +20,7 @@ function tke_by_region(
     inds = centre_indices(foldername)
     
     term_names = ["VSP", "LSP", "BFLUX", "DSP", "ε"]
-    term_labels = [L"\text{VSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}", L"\varepsilon"]
+    term_labels = [L"\text{VSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"\varepsilon"]
 
     # Plot in front and in arrest region
     
@@ -29,8 +30,9 @@ function tke_by_region(
 
     TKE = joinpath(foldername, "TKE.jld2")
 
-    Δm = 1.027e-3 * sp.Lh * sp.Lz * sp.Ly / (sp.Nh * sp.Nz)
-    Δt = 3600
+    Δm = 1.027 * sp.Lh * sp.Lz * sp.Ly / (sp.Nh * sp.Nz)
+    Δt = 1
+    #ΔE = sum(get_field(joinpath(foldername, "DFM.jld2"), "v_dfm", iterations[1]) .^2 / 2) * Δm
 
     terms = map(regions) do region
         mask = [maskfromlines(x, z, region) for x in xsᶜ, z in zsᶜ]
@@ -38,11 +40,14 @@ function tke_by_region(
             timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt
         end
     end
+    termmax = mapreduce(max, terms.total) do term
+        maximum(abs, term)
+    end
     
     ax_kw = (;
         xlabel=L"t / \text{hr}",
-        ylabel=L"\Delta P / \text{MJ} \text{hr}^{-1}",
-        limits=(0, nothing, nothing, nothing),
+        ylabel=L"\Delta P / \text{kW}",
+        limits=(0, nothing, -termmax, termmax),
         ax_kw...
     )
     
@@ -57,7 +62,14 @@ function tke_by_region(
     #hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
     #hideydecorations!(axeslns.top.ax; ticks=false, grid=false)
     hideydecorations!(axeslns.arrest.ax; ticks=false, grid=false)
+    subfig_label!(fig[1, 1], 1)
+    subfig_label!(fig[1, 2], 2)
+
     
+    for frame in frames
+        lines!(axeslns.total.ax, [times[frame], times[frame]] / 3600, [-termmax, termmax]; linestyle=:dash, color=:grey)
+        lines!(axeslns.arrest.ax, [times[frame], times[frame]] / 3600, [-termmax, termmax]; linestyle=:dash, color=:grey)
+    end
     fig
 end
 

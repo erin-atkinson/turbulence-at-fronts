@@ -1,3 +1,5 @@
+using Oceananigans.Operators
+
 @inline down_front_mean(a) = Field(Average(a; dims=2))
 @inline dfm(a) = down_front_mean(a)
 

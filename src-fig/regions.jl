@@ -3,14 +3,14 @@
 regions = (;
     arrest = [
         Point2f(-1750, -25),
-        Point2f(-2000, -4),
-        Point2f(-1700, -4),
-        Point2f(-1050, -40),
+        Point2f(-2000, -0),
+        Point2f(-1700, -0),
+        Point2f(-1050, -30),
         Point2f(-1050, -50),
     ],
     total = [
-        Point2f(-2500, -4), 
-        Point2f(2500, -4), 
+        Point2f(-2500, -0), 
+        Point2f(2500, -0), 
         Point2f(2500, -50), 
         Point2f(-2500, -50),
     ]

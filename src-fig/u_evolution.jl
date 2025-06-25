@@ -1,7 +1,8 @@
 function u_evolution(
         foldername,
         frames,
-        z; 
+        z,
+        region=nothing; 
         fig_kw=(; ), 
         ax_kw=(; ),
         axh_kw=(; ),
@@ -34,6 +35,7 @@ function u_evolution(
     b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
     bh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "b", iterations)
 
+    
     u_max = max(maximum(abs, u_dfm), maximum(abs, uh))
     
     titles = map(times) do t
@@ -60,16 +62,16 @@ function u_evolution(
     )
 
     axs = map(1:length(frames), frames, titles) do i, frame, title
-        Axis(fig[1, i]; ax_kw..., title)
+        Axis(fig[i, 1]; ax_kw..., title)
     end
 
     axsh = map(1:length(frames), frames) do i, frame
-        Axis(fig[2, i]; axh_kw...)
+        Axis(fig[i, 2]; axh_kw...)
     end
     
-    hideydecorations!.(axs[2:end]; ticks=false)
-    hideydecorations!.(axsh[2:end]; ticks=false)
-    hidexdecorations!.(axs; ticks=false)
+    hidexdecorations!.(axs[1:end-1]; ticks=false)
+    hidexdecorations!.(axsh[1:end-1]; ticks=false)
+    hideydecorations!.(axsh; ticks=false)
 
     ht_kw = (;
         colormap,
@@ -99,14 +101,18 @@ function u_evolution(
         #contour!(ax, xsᶜ / 1000, ysᶠ / 1000, bh[i, :, :]; ct_kw...)
     end
 
-    Colorbar(fig[1:2, length(frames)+1], hts[1]; label=L"u / \text{ms}^{-1}")
+    Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"u / \text{ms}^{-1}", vertical=false, flipaxis=false)
 
     for i in 1:length(frames)
-        subfig_label!(fig[1, i], i)
-        subfig_label!(fig[2, i], i+length(frames))
+        subfig_label!(fig[i, 1], 2(i-1) +1)
+        subfig_label!(fig[i, 2], 2i)
     end
     for ax in axs
         lines!(ax, [ax_kw.limits[1], ax_kw.limits[2]], [z, z]; color=(:red, 0.5), linestyle=:dash)
+    end
+    if region != nothing
+        mask = [maskfromlines(1000x, z, region) for x in range(-sp.Lh/2000, sp.Lh/2000, 1000), z in range(-sp.Lz, 0, 1000)]
+        contour!(axs[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dash, linewidth=1)
     end
     fig
 end

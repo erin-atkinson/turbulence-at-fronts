@@ -134,9 +134,9 @@ end
 
 start_time = Int(time_ns())
 prev_time = Int(time_ns())
-for (frame, iteration, time) in zip(frames, iterations, times)
+for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[frames], times[frames])
     # Reset counter after giving kernel functions chance to compile
-    frame == 11 && global setup_time = Int(time_ns())
+    i == 11 && global setup_time = Int(time_ns())
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
 
@@ -144,10 +144,10 @@ for (frame, iteration, time) in zip(frames, iterations, times)
     
     write_outputs(outputfilename, iteration, time, output_fields)
     write_outputs(tempfilename, iteration, time, temp_fields)
-    progstring = if frame > 10
+    progstring = if i > 10
         setupstr = round((setup_time - start_time)/1e9; digits=3)
         
-        avg_time = (Int(time_ns()) - setup_time)/(1e9*(frame-10))
+        avg_time = (Int(time_ns()) - setup_time)/(1e9*(i-10))
         avgstr = round(avg_time; digits=3)
         elapsed_time = round((Int(time_ns()) - initial_time)/1e9; digits=3)
         total_time = round((setup_time - initial_time)/1e9 + avg_time * (length(frames) - 10); digits=3)

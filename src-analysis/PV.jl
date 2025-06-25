@@ -1,4 +1,5 @@
 include("terms/terms.jl")
+include("terms/vorticity/vorticity.jl")
 
 include("terms/pv/q.jl")
 include("terms/pv/Vq.jl")
