@@ -6,8 +6,13 @@ function full_video(
         fig_kw=(; ), 
         ax_kw=(; ),
         axh_kw=(; ),
+        ax_series_kw=(; ),
         ht_kw=(; ),
-        ct_kw=(; ),
+        ht_Vq_kw=(; ),
+        ln_Vq_kw=(; ),
+        ln_VSP_kw=(; ),
+        ct_b_kw=(; ),
+        ct_v_kw=(; ),
         record_kw=(; ),
         σ=0,
         σh=0,
@@ -24,8 +29,11 @@ function full_video(
     times = full_times[frames]
 
     n = Observable(1)
+    frame = @lift frames[$n]
+    
     iteration = @lift iterations[$n]
     t = @lift times[$n]
+    
     u_title = @lift let time_string = prettytime($t / 3600; digits=1)
         L"u, t=%$time_string ~\text{hr}"
     end
@@ -63,6 +71,9 @@ function full_video(
     VSP_series = timeseries_of(joinpath(foldername, "TKE.jld2"), "VSP", full_iterations) do field
         mean(field[inds, :]) * sp.Lh * sp.Ly * sp.Lz
     end
+
+    Vq_point = @lift [Point2D($t / 3600, Vq_series[$frame])]
+    VSP_point = @lift [Point2D($t / 3600, VSP_series[$frame])]
     
     ax_u = Axis(fig[2, 1];
         limits=(-sp.Lh/2000, sp.Lh/2000, -sp.H, 0),
