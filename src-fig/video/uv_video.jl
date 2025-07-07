@@ -113,6 +113,9 @@ function uv_video(
     
     ht_uh = heatmap!(ax_uh, xsᶠ ./ 1000, ysᶜ / 1000, uh; ht_u_kw...)
     ht_vh = heatmap!(ax_vh, xsᶜ ./ 1000, ysᶠ / 1000, vh; ht_v_kw...)
+
+    contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_kw...)
+    contour!(ax_vh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_kw...) 
     
     Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{ms}^{-1}")
     Colorbar(fig[3, 2], ht_v; vertical=false, flipaxis=false, label=L"v / \text{ms}^{-1}")
