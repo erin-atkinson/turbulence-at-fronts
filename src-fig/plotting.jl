@@ -193,7 +193,7 @@ end
 # Reduce Nd field using func (Nd->Md), then find it for all times
 
 @inline function timeseries_of(args...)
-    timeseries_of(identity, args)
+    timeseries_of(identity, args...)
 end
 
 @inline function timeseries_of(func::Function, file, field, iterations)
