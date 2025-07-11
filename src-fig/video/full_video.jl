@@ -10,7 +10,7 @@ function full_video(
         ht_u_kw=(; ),
         ht_Vq_kw=(; ),
         ln_Vq_kw=(; ),
-        ln_VSP_kw=(; ),
+        ln_TKE_kw=(; ),
         ct_b_kw=(; ),
         ct_v_kw=(; ),
         record_kw=(; ),
@@ -50,10 +50,11 @@ function full_video(
     DFM = jldopen(joinpath(foldername, "DFM.jld2"))
     PV = jldopen(joinpath(foldername, "PV.jld2"))
     OUTPUT = jldopen(joinpath(foldername, "output.jld2"))
+    TKE = jldopen(joinpath(foldername, "TKE.jld2"))
     
     colorrange_u = (-0.1, 0.1)
     colorrange_Vq = (0, 1)
-    v_levels = range(-0.5, 0.5, 0.05)
+    v_levels = range(-0.3, 0.3, 15)
 
     u = @lift get_field(DFM, "u_dfm", $iteration) .+ U
     v = @lift get_field(DFM, "v_dfm", $iteration)
@@ -65,16 +66,16 @@ function full_video(
 
     Vq = @lift get_field(PV, "Vq_dfm", $iteration)
     
-    Vq_series = timeseries_of(joinpath(foldername, "PV.jld2"), "Vq_dfm", full_iterations) do field
-        mean(field[inds, :]) * sp.Lh * sp.Ly * sp.Lz
+    Vq_series = timeseries_of(PV, "Vq_dfm", full_iterations) do field
+        mean(field[inds, :])
     end
 
-    VSP_series = timeseries_of(joinpath(foldername, "TKE.jld2"), "VSP", full_iterations) do field
-        mean(field[inds, :]) * sp.Lh * sp.Ly * sp.Lz
+    TKE_series = timeseries_of(TKE, "TKE", full_iterations) do field
+        mean(field[inds, :]) * 1e-6 * 1037 * sp.Lh * sp.Ly * sp.Lz
     end
 
-    Vq_point = @lift [Point2D($t / 3600, Vq_series[$frame])]
-    VSP_point = @lift [Point2D($t / 3600, VSP_series[$frame])]
+    Vq_point = @lift [Point2($t / 3600, Vq_series[$frame])]
+    TKE_point = @lift [Point2($t / 3600, TKE_series[$frame])]
     
     ax_u = Axis(fig[2, 1];
         limits=(-sp.Lh/2000, sp.Lh/2000, -sp.H, 0),
@@ -100,16 +101,24 @@ function full_video(
     )
 
     ax_Vq_series = Axis(fig[1, 2];
-        limits=(0, full_times[end] / 3600, nothing, nothing),
+        limits=(0, full_times[end] / 3600, 0.23, 0.30),
         xlabel=L"t / \text{hr}",
-        ylabel=L"Vq",
+        ylabel="Negative PV fraction",
+        yticklabelcolor=:blue,
+        ylabelcolor=:blue,
+        xaxisposition=:top,
+        yticks=range(0.24, 0.30, 3),
         ax_series_kw...
     )
-    ax_VSP_series = Axis(fig[1, 2];
-        limits=(0, full_times[end] / 3600, nothing, nothing),
+    ax_TKE_series = Axis(fig[1, 2];
+        limits=(0, full_times[end] / 3600, 23, 30),
         xlabel=L"t / \text{hr}",
-        ylabel=L"VSP / \text{kW}",
+        ylabel=L"TKE / \text{MJ}",
+        yticklabelcolor=:green,
+        ylabelcolor=:green,
         yaxisposition = :right,
+        xaxisposition=:top,
+        yticks=range(24, 30, 3),
         ax_series_kw...
     )
     
@@ -117,7 +126,7 @@ function full_video(
         colorrange=colorrange_u,
         lowclip=colormap_u[1],
         highclip=colormap_u[end],
-        colormap,
+        colormap=colormap_u,
         ht_u_kw...
     )
     ct_b_kw = (;
@@ -126,23 +135,23 @@ function full_video(
         ct_b_kw...
     )
     ct_v_kw = (;
-        color=(:blue, 0.5),
+        colormap=colormap_u,
         levels=v_levels,
         ct_v_kw...
     )
 
     ht_Vq_kw = (;
         colorrange=colorrange_Vq,
-        colormap,
+        colormap=colormap_Vq,
         ht_Vq_kw...
     )
     ln_Vq_kw = (;
-        color=:blue,
+        color=ax_Vq_series.yticklabelcolor,
         ln_Vq_kw...
     )
-    ln_VSP_kw = (;
-        color=:green,
-        ln_VSP_kw...
+    ln_TKE_kw = (;
+        color=ax_TKE_series.yticklabelcolor,
+        ln_TKE_kw...
     )
 
     # Mean and slice of u, v and b contours
@@ -151,25 +160,27 @@ function full_video(
     contour!(ax_u, xsᶜ ./ 1000, zsᶜ, b; ct_b_kw...)
     contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_b_kw...)
     contour!(ax_u, xsᶜ ./ 1000, zsᶜ, v; ct_v_kw...)
-    contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, vh; ct_v_kw...)
+    #contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, vh; ct_v_kw...)
 
-    # PV and VSP lines and point
-    ln_Vq = lines(ax_Vq_series, full_times ./ 3600, Vq_series; ln_Vq_kw)
-    ln_VSP = lines(ax_VSP_series, full_times ./ 3600, VSP_series; ln_VSP_kw)
-    scatter!(ax_Vq_series, Vq_point; color=:blue, marker=:+)
-    scatter!(ax_VSP_series, VSP_point; color=:green, marker=:+)
+    # PV and TKE lines and point
+    ln_Vq = lines!(ax_Vq_series, full_times ./ 3600, Vq_series; ln_Vq_kw...)
+    ln_TKE = lines!(ax_TKE_series, full_times ./ 3600, TKE_series; ln_TKE_kw...)
+    scatter!(ax_Vq_series, Vq_point; ln_Vq_kw.color, markersize=14)
+    scatter!(ax_TKE_series, TKE_point; ln_TKE_kw.color, markersize=14)
+    scatter!(ax_Vq_series, Vq_point; color=:white, markersize=8)
+    scatter!(ax_TKE_series, TKE_point; color=:white, markersize=8)
 
     # PV heatmap
     ht_Vq = heatmap!(ax_Vq, xsᶜ ./ 1000, zsᶜ, Vq; ht_Vq_kw...)
 
     Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{ms}^{-1}")
-    Colorbar(fig[3, 2], ht_Vq; vertical=false, flipaxis=false, label=L"V_{q < 0}")
+    Colorbar(fig[3, 2], ht_Vq; vertical=false, flipaxis=false, label=L"\overline{V_{q < 0}}")
 
-    hidespines!(ax_VSP_series)
-    hidexdecorations!(ax_VSP_series)
+    hidespines!(ax_TKE_series)
+    hidexdecorations!(ax_TKE_series)
 
     hidexdecorations!(ax_uh; ticks=true)
-    hideydecorations!(ax_Vq; ticks=false)
+    #hideydecorations!(ax_Vq; ticks=false)
 
     rowgap!(fig.layout, 1, Relative(0.02))
 

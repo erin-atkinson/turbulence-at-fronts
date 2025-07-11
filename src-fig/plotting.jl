@@ -193,7 +193,7 @@ end
 # Reduce Nd field using func (Nd->Md), then find it for all times
 
 @inline function timeseries_of(args...)
-    timeseries_of(identity, args)
+    timeseries_of(identity, args...)
 end
 
 @inline function timeseries_of(func::Function, file, field, iterations)
@@ -292,5 +292,12 @@ function field_by_bins(field, b, b_bins)
     map(b_bins[1:end-1], b_bins[2:end]) do b₁, b₂
         field_between(field, b, b₁, b₂)
     end
+end
+# -------------------------------------------------------------
+
+# -------------------------------------------------------------
+@inline function variable_strain_rate(t, sp)
+    turnon = max(1-exp(-sp.f * t / 15), 0)
+    return sp.α * turnon
 end
 # -------------------------------------------------------------
