@@ -22,6 +22,11 @@ function update_fields!(fields, fieldstimeseries, clock, frame)
     update_field!(fields.b, fieldstimeseries.b, frame)
     update_field!(fields.p, fieldstimeseries.p, frame)
 
+    l = length(fieldstimeseries.u)
+    update_field!(fields.u_next, fieldstimeseries.u, min(frame + 1, l))
+    update_field!(fields.v_next, fieldstimeseries.v, min(frame + 1, l))
+    update_field!(fields.w_next, fieldstimeseries.w, min(frame + 1, l))
+
     compute_background!(fields.U, fields.V, fields.W, clock)
     return nothing
 end
@@ -76,6 +81,12 @@ end
 
 fields = map(x->x[1], fieldstimeseries)
 
+next_velocities = (; 
+    u_next=fieldstimeseries.u[2],
+    v_next=fieldstimeseries.v[2],
+    w_next=fieldstimeseries.w[2],
+)
+
 # Initialise a clock
 clock = Clock(; time=0.0)
 
@@ -85,7 +96,7 @@ times = jldopen(read_times, inputfilename)
 sp = jldopen(read_parameters, parameterfilename)
 
 include("terms/strainflow.jl")
-fields = merge(fields, (; U, V, W))
+fields = merge(fields, next_velocities, (; U, V, W))
 
 frames = 1:length(iterations)
 
