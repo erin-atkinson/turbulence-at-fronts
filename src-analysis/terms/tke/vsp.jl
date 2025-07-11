@@ -12,13 +12,13 @@
     
     total_w = SumOfArrays{2}(w, W)
     
-    wu = advective_momentum_flux_density_Wu(i, j, k, grid, centered, total_w, u)
-    wv = advective_momentum_flux_density_Wv(i, j, k, grid, centered, total_w, v)
-    ww = advective_momentum_flux_density_Ww(i, j, k, grid, centered, total_w, w)
+    wu = advective_momentum_flux_density_Wu(i, j, k, grid, weno, total_w, u)
+    wv = advective_momentum_flux_density_Wv(i, j, k, grid, weno, total_w, v)
+    ww = advective_momentum_flux_density_Ww(i, j, k, grid, weno, total_w, w)
 
-    wu_dfm = advective_momentum_flux_density_Wu(i, j, k, grid, centered, total_w, u_dfm)
-    wv_dfm = advective_momentum_flux_density_Wv(i, j, k, grid, centered, total_w, v_dfm)
-    ww_dfm = advective_momentum_flux_density_Ww(i, j, k, grid, centered, total_w, w_dfm)
+    wu_dfm = advective_momentum_flux_density_Wu(i, j, k, grid, weno, total_w, u_dfm)
+    wv_dfm = advective_momentum_flux_density_Wv(i, j, k, grid, weno, total_w, v_dfm)
+    ww_dfm = advective_momentum_flux_density_Ww(i, j, k, grid, weno, total_w, w_dfm)
     
     uz = ℑxzᶜᵃᶜ(i, j, k, grid, ∂zᶠᶜᶠ, u_dfm)
     vz = ℑzᵃᵃᶜ(i, j, k, grid, ∂zᶜᶜᶠ, v_dfm)

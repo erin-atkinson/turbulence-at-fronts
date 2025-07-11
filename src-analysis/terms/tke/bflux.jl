@@ -9,8 +9,8 @@
 
     total_w = SumOfArrays{2}(w, W)
     
-    wb = advective_tracer_flux_density_z(i, j, k, grid, centered, total_w, b)
-    wb_dfm = advective_tracer_flux_density_z(i, j, k, grid, centered, total_w, b_dfm)
+    wb = advective_tracer_flux_density_z(i, j, k, grid, weno, total_w, b)
+    wb_dfm = advective_tracer_flux_density_z(i, j, k, grid, weno, total_w, b_dfm)
     
     return wb - wb_dfm
 end

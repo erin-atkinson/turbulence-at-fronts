@@ -12,13 +12,13 @@
 
     total_u = SumOfArrays{2}(u, U)
     
-    uu = advective_momentum_flux_density_Uu(i, j, k, grid, centered, total_u, u)
-    uv = advective_momentum_flux_density_Uv(i, j, k, grid, centered, total_u, v)
-    uw = advective_momentum_flux_density_Uw(i, j, k, grid, centered, total_u, w)
+    uu = advective_momentum_flux_density_Uu(i, j, k, grid, weno, total_u, u)
+    uv = advective_momentum_flux_density_Uv(i, j, k, grid, weno, total_u, v)
+    uw = advective_momentum_flux_density_Uw(i, j, k, grid, weno, total_u, w)
 
-    uu_dfm = advective_momentum_flux_density_Uu(i, j, k, grid, centered, total_u, u_dfm)
-    uv_dfm = advective_momentum_flux_density_Uv(i, j, k, grid, centered, total_u, v_dfm)
-    uw_dfm = advective_momentum_flux_density_Uw(i, j, k, grid, centered, total_u, w_dfm)
+    uu_dfm = advective_momentum_flux_density_Uu(i, j, k, grid, weno, total_u, u_dfm)
+    uv_dfm = advective_momentum_flux_density_Uv(i, j, k, grid, weno, total_u, v_dfm)
+    uw_dfm = advective_momentum_flux_density_Uw(i, j, k, grid, weno, total_u, w_dfm)
     
     ux = ∂xᶜᶜᶜ(i, j, k, grid, u_dfm)
     vx = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶜ, v_dfm)
