@@ -50,3 +50,8 @@ using Oceananigans.Advection: advective_momentum_flux_Uu,
 @inline ∂Uc∂x_func(i, j, k, grid, advection, U, c) = @inbounds δxᶜᵃᵃ(i, j, k, grid, advective_tracer_flux_x, advection, U, c) / Vᶜᶜᶜ(i, j, k, grid)
 @inline ∂Vc∂y_func(i, j, k, grid, advection, V, c) = @inbounds δyᵃᶜᵃ(i, j, k, grid, advective_tracer_flux_y, advection, V, c) / Vᶜᶜᶜ(i, j, k, grid)
 @inline ∂Wc∂z_func(i, j, k, grid, advection, W, c) = @inbounds δzᵃᵃᶜ(i, j, k, grid, advective_tracer_flux_z, advection, W, c) / Vᶜᶜᶜ(i, j, k, grid)
+
+
+@inline div_𝐯u′(i, j, k, grid, advection, u, u_dfm) = div_𝐯u(i, j, k, grid, advection, total_velocities, u) - div_𝐯u(i, j, k, grid, advection, total_velocities, u_dfm)
+@inline div_𝐯v′(i, j, k, grid, advection, v, v_dfm) = div_𝐯v(i, j, k, grid, advection, total_velocities, v) - div_𝐯v(i, j, k, grid, advection, total_velocities, v_dfm)
+@inline div_𝐯w′(i, j, k, grid, advection, w, w_dfm) = div_𝐯w(i, j, k, grid, advection, total_velocities, w) - div_𝐯w(i, j, k, grid, advection, total_velocities, w_dfm)
