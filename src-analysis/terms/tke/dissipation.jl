@@ -37,7 +37,7 @@
     v′dv′dt = ℑyᵃᶜᵃ(i, j, k, grid, f′_avg_Gg, v, v_next, v_dfm, v_next_dfm, df′dt, v, v_next, v_dfm, v_next_dfm, Δt)
     w′dw′dt = ℑzᵃᵃᶜ(i, j, k, grid, f′_avg_Gg, w, w_next, w_dfm, w_next_dfm, df′dt, w, w_next, w_dfm, w_next_dfm, Δt)
     
-    return (u′du′dt + v′dv′dt + w′dw′dt) + (u′div_𝐯u′, v′div_𝐯v′, w′div_𝐯w′)
+    return (u′du′dt + v′dv′dt + w′dw′dt) + (u′div_𝐯u′ + v′div_𝐯v′ + w′div_𝐯w′)
 end
 
 DTKEDt3D_dependencies = (
