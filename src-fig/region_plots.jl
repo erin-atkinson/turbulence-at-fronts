@@ -31,13 +31,15 @@ function tke_by_region(
     TKE = joinpath(foldername, "TKE.jld2")
 
     Δm = 1.027 * sp.Lh * sp.Lz * sp.Ly / (sp.Nh * sp.Nz)
-    Δt = 1
-    #ΔE = sum(get_field(joinpath(foldername, "DFM.jld2"), "v_dfm", iterations[1]) .^2 / 2) * Δm
+    Δt = 3600
+
+    # Reference energy 
+    ΔE = sum(get_field(v->Δm * v^2 / 2, joinpath(foldername, "DFM.jld2"), "v_dfm", iterations[1]))
 
     terms = map(regions) do region
         mask = [maskfromlines(x, z, region) for x in xsᶜ, z in zsᶜ]
         terms = map(term_names) do term_name
-            timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt
+            timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt / ΔE
         end
     end
     termmax = mapreduce(max, terms.total) do term
@@ -46,7 +48,7 @@ function tke_by_region(
     
     ax_kw = (;
         xlabel=L"t / \text{hr}",
-        ylabel=L"\Delta P / \text{kW}",
+        ylabel=L"\Delta P / \text{hr}",
         limits=(0, nothing, -termmax, termmax),
         ax_kw...
     )
@@ -56,7 +58,7 @@ function tke_by_region(
         (; ax, lns)
     end
 
-    Legend(fig[1, 3], axeslns.arrest.lns, term_labels, L"\Delta P")
+    Legend(fig[1, 3], axeslns.arrest.lns, term_labels, L"E\_0 \Delta P")
     
     #hidexdecorations!(axeslns.arrest.ax; ticks=false, grid=false)
     #hidexdecorations!(axeslns.top.ax; ticks=false, grid=false)
