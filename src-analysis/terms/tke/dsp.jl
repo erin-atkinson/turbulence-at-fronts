@@ -5,20 +5,20 @@
     u = fields.u
     v = fields.v
     
+    u_next = fields.u_next
+    v_next = fields.v_next
+
     u_dfm = dependency_fields.u_dfm
     v_dfm = dependency_fields.v_dfm
-
-    U = fields.U
-    V = fields.V
-
-    total_u = SumOfArrays{2}(U, u)
-    total_v = SumOfArrays{2}(V, v)
     
-    uu = advective_momentum_flux_density_Uu(i, j, k, grid, weno, total_u, u)
-    uu_dfm = advective_momentum_flux_density_Uu(i, j, k, grid, weno, total_u, u_dfm)
+    u_next_dfm = dependency_fields.u_next_dfm
+    v_next_dfm = dependency_fields.v_next_dfm
 
-    vv = advective_momentum_flux_density_Vv(i, j, k, grid, weno, total_v, v)
-    vv_dfm = advective_momentum_flux_density_Vv(i, j, k, grid, weno, total_v, v_dfm)
+    uu = ℑxᶜᵃᵃ(i, j, k, grid, fGg, u, a_avg, u, u_next)
+    vv = ℑyᵃᶜᵃ(i, j, k, grid, fGg, v, a_avg, v, v_next)
+
+    uu_dfm = ℑxᶜᵃᵃ(i, j, k, grid, fGg, u_dfm, a_avg, u_dfm, u_next_dfm)
+    vv_dfm = ℑyᵃᶜᵃ(i, j, k, grid, fGg, v_dfm, a_avg, v_dfm, v_next_dfm)
     
     return -α * ((uu - uu_dfm) - (vv - vv_dfm))
 end
@@ -26,4 +26,6 @@ end
 DSP_dependencies = (
     :u_dfm,
     :v_dfm,
+    :u_next_dfm,
+    :v_next_dfm,
 )
