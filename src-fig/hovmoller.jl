@@ -34,7 +34,7 @@ function hovmoller(
     b = filt(b .+ b_offset, σ)
     b_surface = filt(b_surface .+ b_offset, σ)
     
-    u_max = max(maximum(abs, u), maximum(abs, u_surface))
+    u_max = max(maximum(abs, u[:, inds]), maximum(abs, u_surface[:, inds]))
 
     ax_kw = (;
         xlabel=L"t/\text{hr}",

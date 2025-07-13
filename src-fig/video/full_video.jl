@@ -23,7 +23,7 @@ function full_video(
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
     inds = centre_indices(foldername)
     colormap_u = to_colormap(:balance)
-    colormap_Vq = to_colormap(:magma)
+    colormap_Vq = to_colormap(:diff)
     z_indᶜ = zᶜbounds(foldername, z)
 
     iterations = full_iterations[frames]
@@ -39,8 +39,8 @@ function full_video(
         L"t=%$time_string ~\text{hr}"
     end
     
-    U = [-sp.α * x for x in xsᶠ, y in 1:1] .* background
-    V = [sp.α * y for x in 1:1, y in ysᶠ] .* background
+    U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, y in 1:1, z in 1:1] .* background
+    V = [variable_strain_rate(t, sp) * y for t in times, x in 1:1, y in ysᶠ, z in 1:1] .* background
     
     fig = Figure(; 
         size=(960, 540),
@@ -56,12 +56,12 @@ function full_video(
     colorrange_Vq = (0, 1)
     v_levels = range(-0.3, 0.3, 15)
 
-    u = @lift get_field(DFM, "u_dfm", $iteration) .+ U
+    u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
     v = @lift get_field(DFM, "v_dfm", $iteration)
     b = @lift get_field(DFM, "b_dfm", $iteration)
     
-    uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U
-    vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V
+    uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1]
+    vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V[$n, :, :, 1]
     bh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "b", $iteration)
 
     Vq = @lift get_field(PV, "Vq_dfm", $iteration)

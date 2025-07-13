@@ -10,6 +10,7 @@ function u_evolution(
         ct_kw=(; ),
         σ=0,
         σh=0,
+        background=true,
     )
 
     iterations, times = iterations_times(foldername)
@@ -27,16 +28,16 @@ function u_evolution(
     iterations = iterations[frames]
     times = times[frames]
 
-    U = [-0sp.α * x for x in xsᶠ, y in 1:1]
+    U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, yz in 1:1] .* background
 
-    u_dfm = timeseries_of(a->filt(a, σ) .+ U, joinpath(foldername, "DFM.jld2"), "u_dfm", iterations)
-    uh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh) .+ U, joinpath(foldername, "output.jld2"), "u", iterations)
+    u_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U
+    uh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "u", iterations) .+ U
     
     b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
     bh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "b", iterations)
 
     
-    u_max = max(maximum(abs, u_dfm), maximum(abs, uh))
+    u_max = max(maximum(abs, u_dfm[:, inds, :]), maximum(abs, uh[:, inds, :]))
     
     titles = map(times) do t
         t_val = rpad(round(sp.f * t / 2π; digits=2), 4, '0')

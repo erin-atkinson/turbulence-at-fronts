@@ -15,8 +15,8 @@ function instability_plot(
     sp = simulation_parameters(foldername)
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
     inds = centre_indices(foldername)
-    colormap = to_colormap(:magma)
-    colormap = [repeat(colormap[1:1], 2*length(colormap)÷4); colormap]
+    colormap = to_colormap(:diff)
+    #colormap = [repeat(colormap[1:1], 2*length(colormap)÷4); colormap]
     fig_kw = (;
         size=(800, 300),
         fig_kw...
