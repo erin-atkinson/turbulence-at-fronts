@@ -52,9 +52,9 @@ function full_video(
     OUTPUT = jldopen(joinpath(foldername, "output.jld2"))
     TKE = jldopen(joinpath(foldername, "TKE.jld2"))
     
-    colorrange_u = (-0.1, 0.1)
+    colorrange_u = (-0.06, 0.06)
     colorrange_Vq = (0, 1)
-    v_levels = range(-0.3, 0.3, 15)
+    v_levels = range(-0.2, 0.2, 12)
 
     u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
     v = @lift get_field(DFM, "v_dfm", $iteration)

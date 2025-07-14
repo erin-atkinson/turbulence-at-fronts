@@ -16,7 +16,7 @@ mkdir $RAM
 cd ~/turbulence-at-fronts
 
 # Location of output.jld2
-export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/StrainQ1
+export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain
 julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER PV $RAM
 
 #export SIM_OUTPUT_FOLDER=../scratch/Project/StrainQ1a2

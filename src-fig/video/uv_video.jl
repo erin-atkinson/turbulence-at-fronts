@@ -44,16 +44,16 @@ function uv_video(
     DFM = jldopen(joinpath(foldername, "DFM.jld2"))
     OUTPUT = jldopen(joinpath(foldername, "output.jld2"))
     
-    colorrange_u = (-0.1, 0.1)
-    colorrange_v = (-0.3, 0.3)
+    colorrange_u = (-0.06, 0.06)
+    colorrange_v = (-0.2, 0.2)
 
     u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
     v = @lift get_field(DFM, "v_dfm", $iteration)
-    b = @lift get_field(DFM, "b_dfm", $iterations)
+    b = @lift get_field(DFM, "b_dfm", $iteration)
     
     uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1]
     vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V[$n, :, :, 1]
-    bh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "b", $iterations)
+    bh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "b", $iteration)
     
     ax_u = Axis(fig[2, 1];
         limits=(-sp.Lh/2000, sp.Lh/2000, -sp.H, 0),
