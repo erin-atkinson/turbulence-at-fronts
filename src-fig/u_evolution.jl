@@ -36,6 +36,7 @@ function u_evolution(
     b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
     bh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "b", iterations)
 
+    MLD = b_dfm .- (b_dfm[:, :, end:end] .- (b_levels[3] - b_levels[1])) 
     
     u_max = max(maximum(abs, u_dfm[:, inds, :]), maximum(abs, uh[:, inds, :]))
     
@@ -96,6 +97,10 @@ function u_evolution(
     
     cts = map(1:length(frames), axs) do i, ax
         contour!(ax, xsᶜ / 1000, zsᶜ, b_dfm[i, :, :]; ct_kw...)
+    end
+    
+    map(1:length(frames), axs) do i, ax
+        contour!(ax, xsᶜ / 1000, zsᶜ, MLD[i, :, :]; levels=[0], color=:blue, linestyle=:dash)
     end
 
     ctsh = map(1:length(frames), axsh) do i, ax
