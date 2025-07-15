@@ -1,6 +1,7 @@
 include("terms/terms.jl")
 include("terms/vorticity/vorticity.jl")
 include("terms/advection/advection.jl")
+include("terms/advection/diffusion.jl")
 
 
 include("terms/pv/q.jl")
