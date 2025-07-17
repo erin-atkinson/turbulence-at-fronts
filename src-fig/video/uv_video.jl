@@ -50,6 +50,7 @@ function uv_video(
     u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
     v = @lift get_field(DFM, "v_dfm", $iteration)
     b = @lift get_field(DFM, "b_dfm", $iteration)
+    MLD = @lift $b .- ($b[:, end:end] .- (b_levels[3] - b_levels[1])) 
     
     uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1]
     vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V[$n, :, :, 1]
@@ -109,7 +110,10 @@ function uv_video(
     ht_v = heatmap!(ax_v, xsᶜ ./ 1000, zsᶜ, v; ht_v_kw...)
 
     contour!(ax_u, xsᶜ ./ 1000, zsᶜ, b; ct_kw...)
-    contour!(ax_v, xsᶜ ./ 1000, zsᶜ, b; ct_kw...) 
+    contour!(ax_v, xsᶜ ./ 1000, zsᶜ, b; ct_kw...)
+    
+    contour!(ax_u, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
+    contour!(ax_v, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
     
     ht_uh = heatmap!(ax_uh, xsᶠ ./ 1000, ysᶜ / 1000, uh; ht_u_kw...)
     ht_vh = heatmap!(ax_vh, xsᶜ ./ 1000, ysᶠ / 1000, vh; ht_v_kw...)

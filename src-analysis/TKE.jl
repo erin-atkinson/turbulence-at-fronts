@@ -33,9 +33,9 @@ TKE3D_fields = (; LSP3D, VSP3D, BFLUX3D, DSP3D, TKE3D, DTKEDt3D)
 
 TKE_fields = (; LSP, VSP, BFLUX, DSP, TKE, DTKEDt)
 
-ε = Field(KernelFunctionOperation{Center, Nothing, Center}(ε_func, grid, clock, fields, TKE_fields, sp))
+# ε = Field(KernelFunctionOperation{Center, Nothing, Center}(ε_func, grid, clock, fields, TKE_fields, sp))
 
-TKE_fields = merge(TKE_fields, (; ε))
+# TKE_fields = merge(TKE_fields, (; ε))
 
 dependency_fields = merge(mean_fields, TKE3D_fields, TKE_fields)
 output_fields = TKE_fields

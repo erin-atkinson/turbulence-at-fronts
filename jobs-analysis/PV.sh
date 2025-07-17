@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
-#SBATCH --time=2:00:00
+#SBATCH --time=3:00:00
 #SBATCH --job-name=ppPV
 #SBATCH --output=../scratch/logs/ppPV.txt
 
@@ -16,7 +16,7 @@ mkdir $RAM
 cd ~/turbulence-at-fronts
 
 # Location of output.jld2
-export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain
+export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain-Large
 julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER PV $RAM
 
 #export SIM_OUTPUT_FOLDER=../scratch/Project/StrainQ1a2
