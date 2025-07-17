@@ -301,3 +301,38 @@ end
     return sp.α * turnon
 end
 # -------------------------------------------------------------
+
+# -------------------------------------------------------------
+using Oceananigans.OutputWriters: saveproperty!, jld2output!
+
+function save_slices(output, file, field, iteration, time)
+    Hx, Hy, Hz = jldopen(halos, file)
+    save_field(a->a[:, :, end-Hz], output, file, field, iteration, time)
+    save_field(a->a[:, :, 1+Hz], output, file, field, iteration, time)
+
+    save_field(a->a[:, end-Hy, :], output, file, field, iteration, time)
+    save_field(a->a[:, 1+Hy, :], output, file, field, iteration, time)
+
+    save_field(a->a[end-Hx, :, :], output, file, field, iteration, time)
+    save_field(a->a[1+Hx, :, :], output, file, field, iteration, time)
+    return nothing
+end
+
+function save_field(f, output, file, field, iteration, time)
+    data = get_field(f, file, field, iteration; halo=true)
+    jld2output!(output, iteration, time, data, (; ))
+    return nothing
+end
+
+function save_fields(filename, foldername)
+    OUTPUT = joinpath(foldername, "output.jld2")
+    # Write grid to file
+    grid = jldopen(file->file["serialized/grid"], OUTPUT)
+    jldopen(file->saveproperty!(file, "grid", grid), filename, "a")
+    iterations, times = iterations_times(foldername)
+    map(iterations, times) do iteration, time
+        save_slices(filename, OUTPUT, "u", iteration, time)
+    end
+    return nothing
+end
+# -------------------------------------------------------------
