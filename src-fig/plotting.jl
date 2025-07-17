@@ -7,8 +7,8 @@
 using JLD2
 using ImageFiltering: imfilter, Kernel.gaussian
 using OffsetArrays: no_offset_view
-using CairoMakie
-using CairoMakie.Colors
+#using CairoMakie
+#using CairoMakie.Colors
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
