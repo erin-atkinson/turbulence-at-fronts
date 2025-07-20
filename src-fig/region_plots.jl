@@ -38,9 +38,11 @@ function tke_by_region(
 
     terms = map(regions) do region
         mask = [maskfromlines(x, z, region) for x in xsᶜ, z in zsᶜ]
-        terms = map(term_names) do term_name
+        terms = map(term_names[1:end-1]) do term_name
             timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt / ΔE
         end
+        ε = (timeseries_of(a->sum(mask .* a), TKE, "DTKEDt", iterations) * Δm * Δt / ΔE) .- sum(terms)
+        [terms; [ε]]
     end
     termmax = mapreduce(max, terms.total) do term
         maximum(abs, term)

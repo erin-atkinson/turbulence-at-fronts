@@ -102,24 +102,24 @@ function full_video(
     )
 
     ax_Vq_series = Axis(fig[1, 2];
-        limits=(0, full_times[end] / 3600, 0.23, 0.30),
+        limits=(0, full_times[end] / 3600, 0.20, 0.40),
         xlabel=L"t / \text{hr}",
         ylabel="Negative PV fraction",
         yticklabelcolor=:blue,
         ylabelcolor=:blue,
         xaxisposition=:top,
-        yticks=range(0.24, 0.30, 3),
+        yticks=range(0.24, 0.40, 3),
         ax_series_kw...
     )
     ax_TKE_series = Axis(fig[1, 2];
-        limits=(0, full_times[end] / 3600, 23, 30),
+        limits=(0, full_times[end] / 3600, 20, 40),
         xlabel=L"t / \text{hr}",
         ylabel=L"TKE / \text{MJ}",
         yticklabelcolor=:green,
         ylabelcolor=:green,
         yaxisposition = :right,
         xaxisposition=:top,
-        yticks=range(24, 30, 3),
+        yticks=range(24, 40, 3),
         ax_series_kw...
     )
     
