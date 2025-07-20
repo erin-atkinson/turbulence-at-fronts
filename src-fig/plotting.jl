@@ -308,14 +308,14 @@ using Oceananigans.OutputWriters: saveproperty!, jld2output!
 function get_slices(file, field, iteration)
     Hx, Hy, Hz = jldopen(halos, file)
 
-    east = get_field(a->a[end-Hx, :, :], file, field, iteration; halos=true)
-    west = get_field(a->a[1+Hx, :, :], file, field, iteration; halos=true)
+    east = get_field(a->a[end-Hx:end-Hx, :, :], file, field, iteration; halo=true)
+    west = get_field(a->a[1+Hx:1+Hx, :, :], file, field, iteration; halo=true)
 
-    north = get_field(a->a[:, end-Hy, :], file, field, iteration; halos=true)
-    south = get_field(a->a[:, 1+Hy, :], file, field, iteration; halos=true)
+    north = get_field(a->a[:, end-Hy:end-Hy, :], file, field, iteration; halo=true)
+    south = get_field(a->a[:, 1+Hy:1+Hy, :], file, field, iteration; halo=true)
 
-    top = get_field(a->a[:, :, end-Hz], file, field, iteration; halos=true)
-    bottom = get_field(a->a[:, :, 1+Hz], file, field, iteration; halos=true)
+    top = get_field(a->a[:, :, end-Hz:end-Hz], file, field, iteration; halo=true)
+    bottom = get_field(a->a[:, :, 1+Hz:1+Hz], file, field, iteration; halo=true)
     
     return (; north, south, east, west, top, bottom)
 end
@@ -325,11 +325,13 @@ function save_slices(output, filename, field)
 
     grid = jldopen(file->file["serialized/grid"], filename)
     jldopen(file->saveproperty!(file, "grid", grid), output, "a")
-
-    map(iterations, times) do iteration, time
-        data = get_slices(file, field, iteration)
+    print("")
+    map(1:length(iterations), iterations, times) do i, iteration, time
+        data = get_slices(filename, field, iteration)
         jld2output!(output, iteration, time, data, (; ))
+        print("\r$(i)/$(length(iterations))")
     end
+    println("")
     return nothing
 end
 # -------------------------------------------------------------
