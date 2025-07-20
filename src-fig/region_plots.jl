@@ -189,7 +189,7 @@ function mean_frontogenesis_by_region(
     ax_kw = (;
         xlabel=L"t / \text{hr}",
         ylabel=L"10^14\Delta / \text{m}^2\text{s}^{-3}",
-        limits=(0, nothing, nothing, nothing),
+        limits=(0, 200, -5, 5),
         ax_kw...
     )
     
