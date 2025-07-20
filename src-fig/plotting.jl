@@ -305,33 +305,30 @@ end
 # -------------------------------------------------------------
 using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
-function save_slices(output, file, field, iteration, time)
+function get_slices(file, field, iteration)
     Hx, Hy, Hz = jldopen(halos, file)
-    save_field(a->a[:, :, end-Hz], output, file, field, iteration, time)
-    save_field(a->a[:, :, 1+Hz], output, file, field, iteration, time)
 
-    save_field(a->a[:, end-Hy, :], output, file, field, iteration, time)
-    save_field(a->a[:, 1+Hy, :], output, file, field, iteration, time)
+    east = get_field(a->a[end-Hx, :, :], file, field, iteration; halos=true)
+    west = get_field(a->a[1+Hx, :, :], file, field, iteration; halos=true)
 
-    save_field(a->a[end-Hx, :, :], output, file, field, iteration, time)
-    save_field(a->a[1+Hx, :, :], output, file, field, iteration, time)
-    return nothing
+    north = get_field(a->a[:, end-Hy, :], file, field, iteration; halos=true)
+    south = get_field(a->a[:, 1+Hy, :], file, field, iteration; halos=true)
+
+    top = get_field(a->a[:, :, end-Hz], file, field, iteration; halos=true)
+    bottom = get_field(a->a[:, :, 1+Hz], file, field, iteration; halos=true)
+    
+    return (; north, south, east, west, top, bottom)
 end
 
-function save_field(f, output, file, field, iteration, time)
-    data = get_field(f, file, field, iteration; halo=true)
-    jld2output!(output, iteration, time, data, (; ))
-    return nothing
-end
-
-function save_fields(filename, foldername)
-    OUTPUT = joinpath(foldername, "output.jld2")
-    # Write grid to file
-    grid = jldopen(file->file["serialized/grid"], OUTPUT)
-    jldopen(file->saveproperty!(file, "grid", grid), filename, "a")
+function save_slices(output, filename, field)
     iterations, times = iterations_times(foldername)
+
+    grid = jldopen(file->file["serialized/grid"], filename)
+    jldopen(file->saveproperty!(file, "grid", grid), output, "a")
+
     map(iterations, times) do iteration, time
-        save_slices(filename, OUTPUT, "u", iteration, time)
+        data = get_slices(file, field, iteration)
+        jld2output!(output, iteration, time, data, (; ))
     end
     return nothing
 end
