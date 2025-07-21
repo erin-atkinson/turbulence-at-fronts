@@ -19,49 +19,39 @@ p_dfm = dfm(fields.p)
 
 mean_fields = (; u_dfm, v_dfm, w_dfm, p_dfm)
 
-u² = Field(KernelFunctionOperation{Face, Center, Center}(u²_func, grid, clock, fields, mean_fields, sp))
+#u² = Field(KernelFunctionOperation{Face, Center, Center}(u²_func, grid, clock, fields, mean_fields, sp))
 
 # Resolved terms in u²/2 equation
-background_strain = Field(KernelFunctionOperation{Face, Center, Center}(background_strain_func, grid, clock, fields, mean_fields, sp))
-pressure = Field(KernelFunctionOperation{Face, Center, Center}(pressure_func, grid, clock, fields, mean_fields, sp))
-coriolis = Field(KernelFunctionOperation{Face, Center, Center}(coriolis_func, grid, clock, fields, mean_fields, sp))
+background_strain = Field(KernelFunctionOperation{Face, Nothing, Center}(background_strain_func, grid, clock, fields, mean_fields, sp))
+pressure = Field(KernelFunctionOperation{Face, Nothing, Center}(pressure_func, grid, clock, fields, mean_fields, sp))
+coriolis = Field(KernelFunctionOperation{Face, Nothing, Center}(coriolis_func, grid, clock, fields, mean_fields, sp))
 
 # Turbulence
 turbulence_h = Field(KernelFunctionOperation{Face, Center, Center}(turbulence_h_func, grid, clock, fields, mean_fields, sp))
 turbulence_z = Field(KernelFunctionOperation{Face, Center, Center}(turbulence_z_func, grid, clock, fields, mean_fields, sp))
 
 # Subgrid terms
-subgrid = Field(KernelFunctionOperation{Face, Center, Center}(subgrid_func, grid, clock, fields, mean_fields, sp))
+# subgrid = Field(KernelFunctionOperation{Face, Center, Center}(subgrid_func, grid, clock, fields, mean_fields, sp))
 
-u²_fields = (;
-    u², 
+turbulence_h_dfm = dfm(turbulence_h)
+turbulence_z_dfm = dfm(turbulence_z)
+
+u_fields = (;
     background_strain,
     pressure,
     coriolis,
     turbulence_h,
     turbulence_z,
-    subgrid
+    turbulence_h_dfm,
+    turbulence_z_dfm
 )
 
-(
-    u²_dfm, 
-    background_strain_dfm,
-    pressure_dfm,
-    coriolis_dfm,
-    turbulence_h_dfm,
-    turbulence_z_dfm,
-    subgrid_dfm
-) = map(dfm, u²_fields)
+dependency_fields = merge(mean_fields, u_fields)
 
-u²_fields_dfm = (; 
-    u²_dfm, 
-    background_strain_dfm,
-    pressure_dfm,
-    coriolis_dfm,
+output_fields = (;
+    background_strain,
+    pressure,
+    coriolis,
     turbulence_h_dfm,
-    turbulence_z_dfm,
-    subgrid_dfm
+    turbulence_z_dfm
 )
-
-dependency_fields = merge(mean_fields, u²_fields, u²_fields_dfm)
-output_fields = u²_fields_dfm
