@@ -34,15 +34,15 @@ function u_evolution(
     uh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "u", iterations) .+ U
     
     b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
-    bh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "b", iterations)
+    bh = timeseries_of(a->filt(a[:, :, z_indᶜ], 1, 1), joinpath(foldername, "output.jld2"), "b", iterations)
 
     MLD = b_dfm .- (b_dfm[:, :, end:end] .- (b_levels[3] - b_levels[1])) 
     
     u_max = max(maximum(abs, u_dfm[:, inds, :]), maximum(abs, uh[:, inds, :]))
     
     titles = map(times) do t
-        t_val = rpad(round(sp.f * t / 2π; digits=2), 4, '0')
-        hr_val = rpad(round(t / 3600; digits=2), 5, '0')
+        t_val = prettytime(sp.f * t / 2π; l=1, digits=1)
+        hr_val = prettytime(t / 3600; l=3, digits=0)
         
         L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end
@@ -104,7 +104,7 @@ function u_evolution(
     end
 
     ctsh = map(1:length(frames), axsh) do i, ax
-        #contour!(ax, xsᶜ / 1000, ysᶠ / 1000, bh[i, :, :]; ct_kw...)
+        contour!(ax, xsᶜ / 1000, ysᶠ / 1000, bh[i, :, :]; ct_kw...)
     end
 
     Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"u / \text{ms}^{-1}", vertical=false, flipaxis=false)

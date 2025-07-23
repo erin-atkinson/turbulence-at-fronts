@@ -4,7 +4,8 @@
 
 function instability_plot(
         foldername,
-        frames; 
+        frames,
+        region=nothing; 
         fig_kw=(; ), 
         ax_kw=(; ),
         ht_kw=(; ),
@@ -32,9 +33,8 @@ function instability_plot(
     # Set each title
 
     titles = map(times) do t
-        t_val = rpad(round(sp.f * t / 2π; digits=2), 4, '0')
-        hr_val = rpad(round(t / 3600; digits=2), 5, '0')
-        
+        t_val = prettytime(sp.f * t / 2π; l=1, digits=1)
+        hr_val = prettytime(t / 3600; l=3, digits=0)
         L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end
     
@@ -62,6 +62,11 @@ function instability_plot(
         ht
     end
     hideydecorations!.(axes[2:end])
-    Colorbar(fig[1, length(axes)+1], hts[1]; label=L"q < 0")
+    Colorbar(fig[1, length(axes)+1], hts[1]; label=L"\overline{V}_{q < 0}")
+
+    if region != nothing
+        mask = [maskfromlines(1000x, z, region) for x in range(-sp.Lh/2000, sp.Lh/2000, 1000), z in range(-sp.Lz, 0, 1000)]
+        contour!(axes[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dash, linewidth=1)
+    end
     fig
 end
