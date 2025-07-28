@@ -82,7 +82,7 @@ end
 function prettytime(t; l=3, digits=3)
     a = split(string(round(t; digits)), '.')
     s = t < 0 ? "-" : " "
-    b = lpad(a[1], l, '0')
+    b = lpad(abs(a[1]), l, '0')
     digits == 0 && return string(s, b)
     return string(s, b, ".", rpad(a[2], digits, '0'))
 end
