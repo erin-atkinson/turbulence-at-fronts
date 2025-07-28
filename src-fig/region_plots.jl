@@ -20,7 +20,7 @@ function tke_by_region(
     inds = centre_indices(foldername)
     
     term_names = ["VSP", "LSP", "BFLUX", "DSP", "ε"]
-    term_labels = [L"\text{VSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"\varepsilon"]
+    term_labels = [L"\text{VSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"-\varepsilon"]
 
     # Plot in front and in arrest region
     
@@ -42,7 +42,7 @@ function tke_by_region(
             timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt / ΔE
         end
         ε = (timeseries_of(a->sum(mask .* a), TKE, "DTKEDt", iterations) * Δm * Δt / ΔE) .- sum(terms)
-        [terms; [ε]]
+        [terms; [-ε]]
     end
     termmax = mapreduce(max, terms.total) do term
         maximum(abs, term)

@@ -29,7 +29,7 @@ end
 @inline function approximate_front_velocity(x, z, sp)
     # We can approximate the velocity far above the thermocline (-(λ + δ)H << z)
     MLD = mixed_layer_depth(x + sp.a * (z + sp.H/2), sp)
-    return sp.N₀² * (MLD - h₀(x, sp)) / sp.f / sp.a
+    return sp.N₀² * max(MLD - h₀(x, sp), 0) / sp.f / sp.a
 end
 
 @inline function approximate_front_vorticity(x, z, sp)

@@ -9,10 +9,10 @@ regions = (;
         Point2f(-1050, -50),
     ],
     total = [
-        Point2f(-2500, -0), 
-        Point2f(2500, -0), 
-        Point2f(2500, -50), 
-        Point2f(-2500, -50),
+        Point2f(-2500, -2), 
+        Point2f(2500, -2), 
+        Point2f(2500, -100), 
+        Point2f(-2500, -100),
     ]
 )
 region_names = (; 

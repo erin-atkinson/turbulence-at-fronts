@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
-#SBATCH --time=0:45:00
+#SBATCH --time=1:45:00
 #SBATCH --job-name=ppDFM
 #SBATCH --output=../scratch/logs/ppDFM.txt
 
@@ -16,7 +16,7 @@ mkdir $RAM
 cd ~/turbulence-at-fronts
 
 # Location of output.jld2
-export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/NoCooling
+export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain-Larger
 julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER DFM $RAM
 
 rm $RAM -rf
