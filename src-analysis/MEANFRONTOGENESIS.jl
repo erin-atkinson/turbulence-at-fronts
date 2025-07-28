@@ -4,6 +4,7 @@ include("terms/advection/advection.jl")
 include("terms/advection/diffusion.jl")
 
 include("terms/meanfrontogenesis/dbdx.jl")
+include("terms/meanfrontogenesis/advection.jl")
 include("terms/meanfrontogenesis/background_strain.jl")
 include("terms/meanfrontogenesis/divergence.jl")
 include("terms/meanfrontogenesis/tilting.jl")
@@ -70,3 +71,5 @@ frontogenesis_fields_dfm = (;
 
 dependency_fields = merge(mean_fields, frontogenesis_fields, frontogenesis_fields_3D, frontogenesis_fields_dfm)
 output_fields = merge(frontogenesis_fields, frontogenesis_fields_dfm)
+
+frames = 891:901
