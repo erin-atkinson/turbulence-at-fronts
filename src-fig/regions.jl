@@ -2,17 +2,17 @@
 # Clockwise, without end point
 regions = (;
     arrest = [
-        Point2f(-1750, -25),
-        Point2f(-2000, -0),
-        Point2f(-1700, -0),
+        Point2f(-1750, -30),
+        Point2f(-2000, -3),
+        Point2f(-1700, -3),
         Point2f(-1050, -30),
-        Point2f(-1050, -50),
+        Point2f(-1050, -55),
     ],
     total = [
-        Point2f(-2500, -2), 
-        Point2f(2500, -2), 
-        Point2f(2500, -50), 
-        Point2f(-2500, -50),
+        Point2f(-2500, -3), 
+        Point2f(2500, -3), 
+        Point2f(2500, -100), 
+        Point2f(-2500, -100),
     ]
 )
 region_names = (; 

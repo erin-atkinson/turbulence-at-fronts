@@ -160,8 +160,8 @@ function full_video(
     ht_uh = heatmap!(ax_uh, xsᶠ ./ 1000, ysᶜ / 1000, uh; ht_u_kw...)
     contour!(ax_u, xsᶜ ./ 1000, zsᶜ, b; ct_b_kw...)
     contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_b_kw...)
-    contour!(ax_u, xsᶜ ./ 1000, zsᶜ, v; ct_v_kw...)
-    contour!(ax_u, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
+    #contour!(ax_u, xsᶜ ./ 1000, zsᶜ, v; ct_v_kw...)
+    #contour!(ax_u, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
     #contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, vh; ct_v_kw...)
 
     # PV and TKE lines and point

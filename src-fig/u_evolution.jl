@@ -11,6 +11,7 @@ function u_evolution(
         σ=0,
         σh=0,
         background=true,
+        mixed_depth=false,
     )
 
     iterations, times = iterations_times(foldername)
@@ -100,7 +101,7 @@ function u_evolution(
     end
     
     map(1:length(frames), axs) do i, ax
-        contour!(ax, xsᶜ / 1000, zsᶜ, MLD[i, :, :]; levels=[0], color=:blue, linestyle=:dash)
+        mixed_depth && contour!(ax, xsᶜ / 1000, zsᶜ, MLD[i, :, :]; levels=[0], color=:blue, linestyle=:dash)
     end
 
     ctsh = map(1:length(frames), axsh) do i, ax
@@ -118,7 +119,7 @@ function u_evolution(
     end
     if region != nothing
         mask = [maskfromlines(1000x, z, region) for x in range(-sp.Lh/2000, sp.Lh/2000, 1000), z in range(-sp.Lz, 0, 1000)]
-        contour!(axs[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dash, linewidth=1)
+        contour!(axs[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dashdot, linewidth=1)
     end
     fig
 end
