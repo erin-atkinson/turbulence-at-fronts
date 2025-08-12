@@ -10,12 +10,13 @@ default_inputs = (;
     Ri=2, # Richardson number
     α=1e-5, # Strain rate
     Q=0, # Cooling rate
-    c=0.5 # Damping rate / IW frequency
+    c=0.5, # Damping rate / IW frequency
+    s=1.05
 )
 
 @inline function create_simulation_parameters(input_parameters=(; ))
     ip = (; default_inputs..., input_parameters...)
-    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, Nz=ip.Nz, H=ip.H, Q=ip.Q, α=ip.α, c=ip.c, s=ip.s
+    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q, c=ip.c, s=ip.s
         # Velocity scale is set
         U = 0.5
 
@@ -29,11 +30,11 @@ default_inputs = (;
         ℓ = U / (f * Ro)
         
         Lh = ℓ / 2
-        Nh = 2*((13Nx) ÷ 32) # Even
+        Nh = 2*((3Nx) ÷ 8) # Even
         Lx = x_width(Nx, Nh, Lh, s)
         
         Ly = Lh * Ny / Nh
-        Lz = 1.5H #abs(bottom_grid_face(H, Nz))
+        Lz = 1.5H
         
         
         # Make a guess of N₀² and a
@@ -59,6 +60,3 @@ end
 @inline function create_simulation_parameters(; input_parameters...)
     create_simulation_parameters(input_parameters)
 end
-
-#νₕ = 1e-12
-#νᵥ = νₕ * (H * Nx / (Lx * Nz))^2
