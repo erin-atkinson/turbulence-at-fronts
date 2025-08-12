@@ -23,6 +23,6 @@ Q="100"
 c="0.5"
 start_time="-4e5"
 save_time="1e3"
-s="1.05"
+s="1.0173"
 
 julia-1.10.10/bin/julia -t 24 -- src-fronts/simulation.jl $output_path $run_time $f $H $Nx $Nh $Ny $Nz $Ro $Ri $alpha $Q $c $damping_width $start_time $save_time

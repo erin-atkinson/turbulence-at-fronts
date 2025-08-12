@@ -13,7 +13,7 @@ using OffsetArrays: no_offset_view
 
 # -------------------------------------------------------------
 const b_step = 0.002 / 15
-const b_levels = range(-0.01, -0.004, 60)
+const b_levels = range(-1, 0, 60)
 
 const ψ_levels = range(-1, 1, 10)
 # -------------------------------------------------------------
