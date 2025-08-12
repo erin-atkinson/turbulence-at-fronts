@@ -176,7 +176,7 @@ function full_video(
     ht_Vq = heatmap!(ax_Vq, xsᶜ ./ 1000, zsᶜ, Vq; ht_Vq_kw...)
 
     Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{ms}^{-1}")
-    Colorbar(fig[3, 2], ht_Vq; vertical=false, flipaxis=false, label=L"\overline{V_{q < 0}}")
+    Colorbar(fig[3, 2], ht_Vq; vertical=false, flipaxis=false, label=L"\overline{\chi}_{q < 0}")
 
     hidespines!(ax_TKE_series)
     hidexdecorations!(ax_TKE_series)

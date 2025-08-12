@@ -112,8 +112,8 @@ function uv_video(
     contour!(ax_u, xsᶜ ./ 1000, zsᶜ, b; ct_kw...)
     contour!(ax_v, xsᶜ ./ 1000, zsᶜ, b; ct_kw...)
     
-    contour!(ax_u, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
-    contour!(ax_v, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
+    #contour!(ax_u, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
+    #contour!(ax_v, xsᶜ ./ 1000, zsᶜ, MLD; levels=[0], color=:blue, linestyle=:dash)
     
     ht_uh = heatmap!(ax_uh, xsᶠ ./ 1000, ysᶜ / 1000, uh; ht_u_kw...)
     ht_vh = heatmap!(ax_vh, xsᶜ ./ 1000, ysᶠ / 1000, vh; ht_v_kw...)
