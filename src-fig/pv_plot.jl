@@ -64,7 +64,7 @@ function instability_plot(
     hideydecorations!.(axes[2:end])
     Colorbar(fig[1, length(axes)+1], hts[1]; label=L"\overline{\chi}_{q < 0}")
 
-    if region != nothing
+    if region !== nothing
         mask = [maskfromlines(1000x, z, region) for x in range(-sp.Lh/2000, sp.Lh/2000, 1000), z in range(-sp.Lz, 0, 1000)]
         contour!(axes[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dashdot, linewidth=1)
     end
