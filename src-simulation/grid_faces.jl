@@ -34,6 +34,3 @@ end
     (; xs, ys, zs)
 end
 # ---------------------------------------
-
-grid_faces = get_grid_faces(sp)
-@info "Created grid faces"

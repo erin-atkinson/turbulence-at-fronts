@@ -24,6 +24,8 @@ jldopen("$output_folder/parameters.jld2", "w") do file
 end
 
 # Get the grid
+grid_faces = get_grid_faces(sp)
+@info "Created grid faces"
 (xs, ys, zs) = grid_faces
 
 grid = RectilinearGrid(GPU();
