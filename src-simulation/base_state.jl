@@ -33,7 +33,6 @@ end
 end
 
 @inline function approximate_front_vorticity(x, z, sp)
-    # We can approximate the velocity far above the thermocline (-(λ + δ)H << z)
     return (approximate_front_velocity(x + 5e-6sp.ℓ, 0, sp) - approximate_front_velocity(x - 5e-6sp.ℓ, 0, sp)) / (1e-5sp.ℓ)
 end
 
@@ -67,11 +66,13 @@ end
     b = Field{Center, Center, Center}(grid)
     set!(b, (x, y, z)->front_buoyancy(x, z, sp))
     fill_halo_regions!(b)
-    
-    B_op = @at (Center, Face, Center) ∂x(b) / sp.f
-    B_diff = compute!(Field(B_op))
+
     # Compute the thermal wind shear
-    V_op = CumulativeIntegral(B_diff; dims=3)
+    S_op = @at (Center, Face, Center) ∂x(b) / sp.f
+    S = compute!(Field(B_op))
+
+    # Integrate
+    V_op = CumulativeIntegral(S; dims=3)
     v = compute!(Field(V_op))
     fill_halo_regions!(v)
     
