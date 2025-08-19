@@ -17,15 +17,6 @@ cd ~/turbulence-at-fronts
 
 # Location of output.jld2
 export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain
-julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER UBALANCE $RAM
-
-#export SIM_OUTPUT_FOLDER=../scratch/Project/StrainQ1a2
-#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER TKE $RAM o
-#export SIM_OUTPUT_FOLDER=../scratch/Project/StrainQ2
-
-#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER TKE $RAM o
-#export SIM_OUTPUT_FOLDER=../scratch/Project/StrainQ3
-
-#julia -t 40 -- src-analysis/post-process.jl $SIM_OUTPUT_FOLDER TKE $RAM o
+julia -t 40 -- src-analysis/postprocess.jl $SIM_OUTPUT_FOLDER UBALANCE $RAM
 
 rm $RAM -rf

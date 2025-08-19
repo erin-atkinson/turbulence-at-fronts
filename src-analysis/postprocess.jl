@@ -1,3 +1,6 @@
+# postprocess.jl
+# Boiler-plate code for offline processing
+
 using Oceananigans
 using JLD2
 
@@ -9,6 +12,17 @@ using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
 initial_time = Int(time_ns())
 prev_time = Int(time_ns())
+
+function timestring(t_ns; digits=3)
+    return string(round(1e-9t_ns; digits), " s")
+end
+
+function eltimestring()
+    t_ns = Int(time_ns())
+    str = timestring(t_ns - prev_time)
+    global prev_time = Int(t_ns)
+    return str
+end
 
 function update_field!(field, fieldtimeseries, frame)
     parent(field) .= parent(fieldtimeseries[frame])
@@ -26,6 +40,8 @@ function update_fields!(fields, fieldstimeseries, clock, frame)
     update_field!(fields.u_next, fieldstimeseries.u, min(frame + 1, l))
     update_field!(fields.v_next, fieldstimeseries.v, min(frame + 1, l))
     update_field!(fields.w_next, fieldstimeseries.w, min(frame + 1, l))
+    update_field!(fields.b_next, fieldstimeseries.b, min(frame + 1, l))
+    update_field!(fields.pNHS_next, fieldstimeseries.pNHS, min(frame + 1, l))
 
     compute_background!(fields.U, fields.V, fields.W, clock)
     return nothing
@@ -81,10 +97,12 @@ end
 
 fields = map(x->x[1], fieldstimeseries)
 
-next_velocities = (; 
+next_fields = (; 
     u_next=fieldstimeseries.u[2],
     v_next=fieldstimeseries.v[2],
     w_next=fieldstimeseries.w[2],
+    b_next=fieldstimeseries.b[2],
+    pNHS_next=fieldstimeseries.pNHS[2],
 )
 
 # Initialise a clock
@@ -96,7 +114,7 @@ times = jldopen(read_times, inputfilename)
 sp = jldopen(read_parameters, parameterfilename)
 
 include("terms/strainflow.jl")
-fields = merge(fields, next_velocities, (; U, V, W))
+fields = merge(fields, next_fields, (; U, V, W))
 
 frames = 1:length(iterations)
 
@@ -112,19 +130,15 @@ Input Julia file should define some things:
         `calculated_fields` if they need to be computed.
     `cleanup`:
         Function to be called before temp_fields is deleted
+In addition, it can redefine `frames` to process only a subset of frames
 =#
+
 @info "Including $scriptname.jl"
 include("$scriptname.jl")
 
 # Write grid to file
 jldopen(file->saveproperty!(file, "grid", grid), outputfilename, "a")
 jldopen(file->saveproperty!(file, "grid", grid), tempfilename, "a")
-
-function eltimestring()
-    str = string(round((Int(time_ns()) - prev_time)/1e9; digits=3), " s")
-    global prev_time = Int(time_ns())
-    str
-end
 
 @info "Finished setup! Elapsed: $(eltimestring())"
 
@@ -144,9 +158,9 @@ map(keys(dependency_fields), dependency_fields) do k, dependency_field
 end
 
 start_time = Int(time_ns())
-prev_time = Int(time_ns())
+eltimestring()
 for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[frames], times[frames])
-    # Reset counter after giving kernel functions chance to compile
+    # Reset counter after giving kernel functions chance to compile for better estimate
     i == 11 && global setup_time = Int(time_ns())
     update_clock!(clock, iterations, times, frame)
     update_fields!(fields, fieldstimeseries, clock, frame)
@@ -156,16 +170,16 @@ for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[fram
     write_outputs(outputfilename, iteration, time, output_fields)
     write_outputs(tempfilename, iteration, time, temp_fields)
     progstring = if i > 10
-        setupstr = round((setup_time - start_time)/1e9; digits=3)
+        setupstr = timestring(setup_time - start_time)
         
-        avg_time = (Int(time_ns()) - setup_time)/(1e9*(i-10))
-        avgstr = round(avg_time; digits=3)
-        elapsed_time = round((Int(time_ns()) - initial_time)/1e9; digits=3)
-        total_time = round((setup_time - initial_time)/1e9 + avg_time * (length(frames) - 10); digits=3)
+        avg_time = (Int(time_ns()) - setup_time)/(i-10)
+        avgstr = timestring(avg_time)
+        elapsed_time = timestring(Int(time_ns()) - initial_time)
+        total_time = timestring(setup_time - initial_time + avg_time * (length(frames) - 10))
         
         string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s, ", "avg: $(avgstr)s, ", "est: $(elapsed_time)s / $(total_time)s")
     else
-        setupstr = round((Int(time_ns()) - start_time)/1e9; digits=3)
+        setupstr = timestring(Int(time_ns()) - start_time)
         string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s")
     end
     print(rpad(progstring, 80, ' '), "\r")
