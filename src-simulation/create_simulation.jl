@@ -55,15 +55,14 @@ model = NonhydrostaticModel(; grid,
     closure,
     buoyancy = BuoyancyTracer(),
     forcing,
-    boundary_conditions,
-    hydrostatic_pressure_anomaly=CenterField(grid)
+    boundary_conditions
 )
 
 @info model
 set!(model; init_state...)
 
 # Some initial timestep...
-Δt = 1e-3 * sp.save_time
+Δt = 1e-1 * sp.save_time
 
 checkpoint_files = filter(readdir(output_folder)) do x
     occursin(r"^checkpoint", x)
@@ -76,30 +75,22 @@ end
 
 simulation = Simulation(model; Δt, stop_time=prev_time + sp.run_time)
 
-# Save pressures and velocities and tracers
+# Save pressure anomaly and velocities and tracers
 u, v, w = model.velocities
 b = model.tracers.b
-p = model.pressures.pHY′ + model.pressures.pNHS
+pNHS = model.pressures.pNHS
 
 # This is a workaround for a quirk with loading a checkpoint
 writing_times = prev_time:sp.save_time:(prev_time+sp.run_time)
 
-simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, p); 
+simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, pNHS); 
     filename="$output_folder/output.jld2", 
     schedule=SpecifiedTimes(writing_times),
     overwrite_existing=false,
     with_halos=true,
     init=(file, model)->write_comment!(file, comment)
 )
-#=
-simulation.output_writers[:mean_fields] = JLD2OutputWriter(model, (; u, v, w, b, p); 
-    filename="$output_folder/TIMEAVERAGE.jld2", 
-    schedule=AveragedTimeInterval(10sp.save_time; window=10sp.save_time),
-    overwrite_existing=false,
-    with_halos=true,
-    init=(file, model)->write_comment!(file, comment)
-)
-=#
+
 # Add a checkpointer that saves at every 10%
 simulation.output_writers[:checkpointer] = Checkpointer(model;
     schedule=SpecifiedTimes(range(prev_time, prev_time + sp.run_time, 11)),

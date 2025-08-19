@@ -20,7 +20,7 @@ function update_fields!(fields, fieldstimeseries, clock, frame)
     update_field!(fields.v, fieldstimeseries.v, frame)
     update_field!(fields.w, fieldstimeseries.w, frame)
     update_field!(fields.b, fieldstimeseries.b, frame)
-    update_field!(fields.p, fieldstimeseries.p, frame)
+    update_field!(fields.pNHS, fieldstimeseries.pNHS, frame)
 
     l = length(fieldstimeseries.u)
     update_field!(fields.u_next, fieldstimeseries.u, min(frame + 1, l))
@@ -72,7 +72,7 @@ finalfilename = joinpath(foldername, "$scriptname.jld2")
 
 @info "Reading timeseries from file"
 
-fieldsymbols = (; u=:u, v=:v, w=:w, b=:b, p=:p)
+fieldsymbols = (; u=:u, v=:v, w=:w, b=:b, pNHS=:pNHS)
 
 fieldstimeseries = map(fieldsymbols) do ξ
     ξ_string = String(ξ)
