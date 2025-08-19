@@ -105,7 +105,7 @@ wizard = TimeStepWizard(; cfl=0.5, max_Δt=1e-3/sp.f)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Compute the advection
-simulation.callbacks[:advection] = Callback(calculate_UV_callback, IterationInterval(1); parameters=sp)
+simulation.callbacks[:advection] = Callback(calculate_U_callback, IterationInterval(1); parameters=sp)
 
 # Output progress
 progress(sim) = print("Running simulation t=$(round(time(sim); digits=2)) iter=$(iteration(sim))\r")
