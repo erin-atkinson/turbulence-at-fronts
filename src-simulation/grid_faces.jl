@@ -30,7 +30,10 @@ end
     ys = (-sp.Ly/2, sp.Ly/2)
     zs = (-sp.Lz, 0)
     
-    @info "Created grid faces"
+    
     (; xs, ys, zs)
 end
 # ---------------------------------------
+
+grid_faces = get_grid_faces(sp)
+@info "Created grid faces"
