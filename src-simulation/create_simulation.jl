@@ -3,6 +3,7 @@ using JLD2
 using Oceananigans.BoundaryConditions: fill_halo_regions!
 
 include("base_state.jl")
+include("grid_faces.jl")
 include("parameters.jl")
 
 const sp = create_simulation_parameters(simulation_parameters)
@@ -23,7 +24,6 @@ jldopen("$output_folder/parameters.jld2", "w") do file
 end
 
 # Get the grid
-include("grid_faces.jl")
 (xs, ys, zs) = grid_faces
 
 grid = RectilinearGrid(GPU();
