@@ -18,7 +18,7 @@ default_inputs = (;
     ip = (; default_inputs..., input_parameters...)
     let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q, c=ip.c, s=ip.s
         # Velocity scale is set
-        U = 0.5
+        U = 0.1
 
         # Mixed layer depth change
         δ = 0.1
@@ -29,8 +29,8 @@ default_inputs = (;
         # Pick a length scale using Rossby number
         ℓ = U / (f * Ro)
         
-        Lh = ℓ / 2
-        Nh = 2*((3Nx) ÷ 8) # Even
+        Lh = 2ℓ
+        Nh = 2*((13Nx) ÷ 32) # Even
         Lx = x_width(Nx, Nh, Lh, s)
         
         Ly = Lh * Ny / Nh

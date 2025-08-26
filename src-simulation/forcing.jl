@@ -77,7 +77,7 @@ w_forcing = (
 )
 b_forcing = (
     AdvectiveForcing(; u=U),
-    Forcing(b_forcing_func; discrete_form=true).
+    Forcing(b_forcing_func; discrete_form=true),
     Forcing(αf_func; field_dependencies=(:b, )),
 )
 # ---------------------------------------

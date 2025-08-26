@@ -10,7 +10,7 @@ export JULIA_DEPOT_PATH=$SCRATCH/.julia-mist
 export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
-output_path=../scratch/turbulence-at-fronts/Strain-Larger
+output_path=../scratch/turbulence-at-fronts/Strain
 run_time="1e5"
 f="1e-4"
 H="100"

@@ -69,7 +69,7 @@ end
 
     # Compute the thermal wind shear
     S_op = @at (Center, Face, Center) ∂x(b) / sp.f
-    S = compute!(Field(B_op))
+    S = compute!(Field(S_op))
 
     # Integrate
     V_op = CumulativeIntegral(S; dims=3)

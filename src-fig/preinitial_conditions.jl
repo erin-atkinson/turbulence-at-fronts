@@ -1,5 +1,5 @@
 using Oceananigans
-include("../src-simulation/grid_cells.jl")
+include("../src-simulation/grid_faces.jl")
 include("../src-simulation/base_state.jl")
 
 @inline function σ(z, sp)

@@ -23,10 +23,10 @@ function hovmoller(
 
     U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ] .* background
     
-    u = timeseries_of(a->filt(a[:, z_indᶜ], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U
+    u = 100 * (timeseries_of(a->filt(a[:, z_indᶜ], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U)
     b = timeseries_of(a->a[:, z_indᶜ], joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
     
-    u_surface = timeseries_of(a->filt(a[:, end], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations)
+    u_surface = 100 * (timeseries_of(a->filt(a[:, end], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations))
     b_surface = timeseries_of(a->a[:, end], joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
 
     b_offset = b[1:1, inds[1:1]] .- b[:, inds[1:1]]
@@ -66,7 +66,7 @@ function hovmoller(
     contour!(ax, times / 3600, xsᶜ / 1000, b; ct_kw...)
     contour!(ax_surface, times / 3600, xsᶜ / 1000, b_surface; ct_kw...)
 
-    Colorbar(fig[1, 3], ht; label=L"u / \text{ms}^{-1}")
+    Colorbar(fig[1, 3], ht; label=L"u / \text{cm}\,\text{s}^{-1}")
 
     subfig_label!(fig[1, 1], 1)
     subfig_label!(fig[1, 2], 2)

@@ -31,8 +31,8 @@ function u_evolution(
 
     U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, yz in 1:1] .* background
 
-    u_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U
-    uh = timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "u", iterations) .+ U
+    u_dfm = 100 * (timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U)
+    uh = 100 * (timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "u", iterations) .+ U)
     
     b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
     bh = timeseries_of(a->filt(a[:, :, z_indᶜ], 1, 1), joinpath(foldername, "output.jld2"), "b", iterations)
@@ -108,7 +108,7 @@ function u_evolution(
         contour!(ax, xsᶜ / 1000, ysᶠ / 1000, bh[i, :, :]; ct_kw...)
     end
 
-    Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"u / \text{ms}^{-1}", vertical=false, flipaxis=false)
+    Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"u / \text{cm}\,{s}^{-1}", vertical=false, flipaxis=false)
 
     for i in 1:length(frames)
         subfig_label!(fig[i, 1], 2(i-1) +1)

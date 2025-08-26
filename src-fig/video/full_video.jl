@@ -52,16 +52,16 @@ function full_video(
     OUTPUT = jldopen(joinpath(foldername, "output.jld2"))
     TKE = jldopen(joinpath(foldername, "TKE.jld2"))
     
-    colorrange_u = (-0.06, 0.06)
+    colorrange_u = (-6, 6)
     colorrange_Vq = (0, 1)
     v_levels = range(-0.2, 0.2, 12)
 
-    u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
+    u = @lift 100 * (get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :])
     v = @lift get_field(DFM, "v_dfm", $iteration)
     b = @lift get_field(DFM, "b_dfm", $iteration)
     MLD = @lift $b .- ($b[:, end:end] .- (b_levels[3] - b_levels[1]))
     
-    uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1]
+    uh = @lift 100 * (get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1])
     vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V[$n, :, :, 1]
     bh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "b", $iteration)
 
@@ -175,7 +175,7 @@ function full_video(
     # PV heatmap
     ht_Vq = heatmap!(ax_Vq, xsᶜ ./ 1000, zsᶜ, Vq; ht_Vq_kw...)
 
-    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{ms}^{-1}")
+    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{cm}\,{s}^{-1}")
     Colorbar(fig[3, 2], ht_Vq; vertical=false, flipaxis=false, label=L"\overline{\chi}_{q < 0}")
 
     hidespines!(ax_TKE_series)

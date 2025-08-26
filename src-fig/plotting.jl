@@ -13,7 +13,7 @@ using OffsetArrays: no_offset_view
 
 # -------------------------------------------------------------
 const b_step = 0.002 / 15
-const b_levels = range(-1, 0, 60)
+const b_levels = range(-0.01, -0.004, 60)
 
 const ψ_levels = range(-1, 1, 10)
 # -------------------------------------------------------------
@@ -307,33 +307,59 @@ end
 # -------------------------------------------------------------
 using Oceananigans.OutputWriters: saveproperty!, jld2output!
 
-function get_slices(file, field, iteration)
-    Hx, Hy, Hz = jldopen(halos, file)
+function get_slices(file, field, iteration; x, y, z)
 
-    east = get_field(a->a[end-Hx:end-Hx, :, :], file, field, iteration; halo=true)
-    west = get_field(a->a[1+Hx:1+Hx, :, :], file, field, iteration; halo=true)
+    x1 = x[1]
+    x2 = x[2]
 
-    north = get_field(a->a[:, end-Hy:end-Hy, :], file, field, iteration; halo=true)
-    south = get_field(a->a[:, 1+Hy:1+Hy, :], file, field, iteration; halo=true)
+    y1 = y[1]
+    y2 = y[2]
 
-    top = get_field(a->a[:, :, end-Hz:end-Hz], file, field, iteration; halo=true)
-    bottom = get_field(a->a[:, :, 1+Hz:1+Hz], file, field, iteration; halo=true)
+    z1 = z[1]
+    z2 = z[2]
+
+    east = get_field(a->a[x1:x1, :, :], file, field, iteration; halo=true)
+    west = get_field(a->a[x2:x2, :, :], file, field, iteration; halo=true)
+
+    north = get_field(a->a[:, y1:y1, :], file, field, iteration; halo=true)
+    south = get_field(a->a[:, y2:y2, :], file, field, iteration; halo=true)
+
+    top = get_field(a->a[:, :, z1:z1], file, field, iteration; halo=true)
+    bottom = get_field(a->a[:, :, z2:z2], file, field, iteration; halo=true)
     
     return (; north, south, east, west, top, bottom)
 end
 
-function save_slices(output, filename, field)
+function save_slices(output, foldername, field; x, y, z)
     iterations, times = iterations_times(foldername)
+    filename = joinpath(foldername, "output.jld2")
 
     grid = jldopen(file->file["serialized/grid"], filename)
     jldopen(file->saveproperty!(file, "grid", grid), output, "a")
     print("")
     map(1:length(iterations), iterations, times) do i, iteration, time
-        data = get_slices(filename, field, iteration)
+        data = get_slices(filename, field, iteration; x, y, z)
         jld2output!(output, iteration, time, data, (; ))
         print("\r$(i)/$(length(iterations))")
     end
     println("")
+    return nothing
+end
+
+function save_all_slices(foldername)
+    iterations, times = iterations_times(foldername)
+    sp = simulation_parameters(foldername)
+    filename = joinpath(foldername, "output.jld2")
+    Hx, Hy, Hz = jldopen(halos, filename)
+    cinds = centre_indices(foldername)
+    for field in ["u", "v", "w", "b"]
+        output = joinpath(foldername, "$(field)-slices.jld2")
+        save_slices(output, foldername, field; 
+            x = (Hx + cinds[1], Hx + cinds[end]), 
+            y = (Hy + 1, Hy + sp.Ny), 
+            z = (Hz + 1, Hz + sp.Nz)
+        )
+    end
     return nothing
 end
 # -------------------------------------------------------------
