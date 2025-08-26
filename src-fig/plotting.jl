@@ -317,15 +317,14 @@ function get_slices(file, field, iteration; x, y, z)
 
     z1 = z[1]
     z2 = z[2]
-
-    east = get_field(a->a[x1:x1, :, :], file, field, iteration; halo=true)
-    west = get_field(a->a[x2:x2, :, :], file, field, iteration; halo=true)
-
-    north = get_field(a->a[:, y1:y1, :], file, field, iteration; halo=true)
-    south = get_field(a->a[:, y2:y2, :], file, field, iteration; halo=true)
-
-    top = get_field(a->a[:, :, z1:z1], file, field, iteration; halo=true)
-    bottom = get_field(a->a[:, :, z2:z2], file, field, iteration; halo=true)
+    a = get_field(a->filt(a, 1, 1, 1), file, field, iteration; halo=true)
+    
+    east = a[x2:x2, :, :]
+    west = a[x1:x1, :, :]
+    north = a[:, y2:y2, :]
+    south = a[:, y1:y1, :]
+    top = mean(a[:, :, (z2-1):z2]; dims=3)
+    bottom = a[:, :, z1:z1]
     
     return (; north, south, east, west, top, bottom)
 end
@@ -336,12 +335,16 @@ function save_slices(output, foldername, field; x, y, z)
 
     grid = jldopen(file->file["serialized/grid"], filename)
     jldopen(file->saveproperty!(file, "grid", grid), output, "a")
+    file = jldopen(filename)
+    iterations = iterations[401:end]
+    times = times[401:end]
     print("")
     map(1:length(iterations), iterations, times) do i, iteration, time
-        data = get_slices(filename, field, iteration; x, y, z)
+        data = get_slices(file, field, iteration; x, y, z)
         jld2output!(output, iteration, time, data, (; ))
         print("\r$(i)/$(length(iterations))")
     end
+    close(file)
     println("")
     return nothing
 end
@@ -352,7 +355,7 @@ function save_all_slices(foldername)
     filename = joinpath(foldername, "output.jld2")
     Hx, Hy, Hz = jldopen(halos, filename)
     cinds = centre_indices(foldername)
-    for field in ["u", "v", "w", "b"]
+    for field in ["u", "v", "b", "w"]
         output = joinpath(foldername, "$(field)-slices.jld2")
         save_slices(output, foldername, field; 
             x = (Hx + cinds[1], Hx + cinds[end]), 
