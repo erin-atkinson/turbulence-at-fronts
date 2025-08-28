@@ -4,7 +4,6 @@
 using SpecialFunctions
 using Oceananigans: fill_halo_regions!
 
-#@inline g(s) = s < 0 ? 0 : sqrt(1 + s^2) - 1
 @inline g(s) = log(1 + exp(s))
 
 @inline γ(s, δ) = -1 + δ * (erf(s) + 1) / 2

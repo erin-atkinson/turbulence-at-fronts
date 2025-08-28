@@ -1,4 +1,5 @@
 using Oceananigans.Operators
+using Oceananigans.Grids: node
 using CUDA: @allowscalar
 
 # ---------------------------------------

@@ -65,18 +65,18 @@ model = NonhydrostaticModel(; grid,
 set!(model; init_state...)
 
 # Some initial timestep...
-Δt = 1e-1 * sp.save_time
+Δt = 1e-3 * sp.save_time
 
 checkpoint_files = filter(readdir(output_folder)) do x
     occursin(r"^checkpoint", x)
 end
 
-# Take the latest checkpoint file (there should only be one though...)
+# Take the latest checkpoint file
 prev_time = mapreduce(max, checkpoint_files; init=sp.start_time * 1.0) do checkpoint_file
-    jldopen(file->file["clock"].time, joinpath(output_folder, checkpoint_file))
+    jldopen(file->file["NonhydrostaticModel/clock"].time, joinpath(output_folder, checkpoint_file))
 end
 
-simulation = Simulation(model; Δt, stop_time=prev_time + sp.run_time)
+simulation = Simulation(model; Δt, stop_time=prev_time+sp.run_time)
 
 # Save pressure anomaly and velocities and tracers
 u, v, w = model.velocities
@@ -94,9 +94,9 @@ simulation.output_writers[:fields] = JLD2Writer(model, (; u, v, w, b, pNHS);
     init=(file, model)->write_comment!(file, comment)
 )
 
-# Add a checkpointer that saves at every 10%
+# Add a checkpointer
 simulation.output_writers[:checkpointer] = Checkpointer(model;
-    schedule=SpecifiedTimes(range(prev_time, prev_time + sp.run_time, 11)),
+    schedule=SpecifiedTimes(prev_time+sp.run_time),
     dir=output_folder,
     cleanup=true,
     overwrite_existing=false,
@@ -111,7 +111,7 @@ simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 simulation.callbacks[:advection] = Callback(calculate_U_callback, IterationInterval(1); parameters=sp)
 
 # Output progress
-progress(sim) = print("Running simulation t=$(round(time(sim); digits=2)) iter=$(iteration(sim))\r")
+progress(sim) = print(rpad("\rRunning simulation t=$(round(time(sim); digits=2)) iter=$(iteration(sim))", 80))
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 
 @info simulation

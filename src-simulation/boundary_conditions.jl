@@ -15,12 +15,8 @@ b_bcs = FieldBoundaryConditions(;
     top=FluxBoundaryCondition(b_flux_func; parameters=(; sp.B, sp.f, sp.start_time))
 )
 v_bcs=FieldBoundaryConditions(;
-    bottom=ValueBoundaryCondition(0),
     east=ValueBoundaryCondition(0),
     west=ValueBoundaryCondition(0)
-)
-u_bcs=FieldBoundaryConditions(;
-    bottom=ValueBoundaryCondition(0),
 )
 w_bcs=FieldBoundaryConditions(;
     east=ValueBoundaryCondition(0),
