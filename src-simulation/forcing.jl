@@ -10,12 +10,11 @@ end
 
 # Damp b at the bottom towards a linear profile
 @inline function b_forcing_func(i, j, k, grid, clock, model_fields)
-    x = @inbounds grid.xᶜᵃᵃ[i]
-    y = @inbounds grid.yᵃᶜᵃ[j]
-    z = @inbounds grid.zᵃᵃᶜ[k]
-    
+    (x, y, z, ) = node(i, j, k, grid, Center(), Center(), Center())
+    (z_bottom, ) = node(i, j, k, grid, Nothing(), Nothing(), Center())
+
     b = @inbounds model_fields.b[i, j, k]
-    tb = @inbounds model_fields.b[i, j, grid.Hz] + sp.N₀² * (z - grid.zᵃᵃᶜ[grid.Hz])
+    tb = @inbounds model_fields.b[i, j, grid.Hz] + sp.N₀² * (z - z_bottom)
     
     return sp.σ * (tb - b) * sponge_layer(x, y, z)
 end
@@ -52,10 +51,7 @@ end
 
 # ---------------------------------------
 # Effect of the background velocity on the mean field
-# Due to the divergent AdvectiveForcing, we don't need the u dU/dx term
-# Also, don't bother taking a mean, should be equivalent for a thin slice
 @inline αf_func(x, y, z, t, f) = -variable_strain_rate(t, sp.α, sp.f) * f
-@inline αv_func(x, y, z, t, v) = 2αf_func(x, y, z, t, v)
 # ---------------------------------------
 
 # ---------------------------------------
@@ -68,7 +64,7 @@ u_forcing = (
 v_forcing = (
     AdvectiveForcing(; u=U),
     Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
-    Forcing(αv_func; field_dependencies=(:v, )),
+    Forcing(αf_func; field_dependencies=(:v, )),
 )
 w_forcing = (
     AdvectiveForcing(; u=U),

@@ -1,4 +1,5 @@
 using Oceananigans
+using CUDA
 using JLD2
 using Oceananigans.BoundaryConditions: fill_halo_regions!
 
@@ -51,7 +52,7 @@ include("closure.jl")
 
 model = NonhydrostaticModel(; grid,
     clock=Clock(time=sp.start_time),
-    advection=WENO(grid; order=9),
+    advection=WENO(; order=9),
     coriolis = FPlane(; sp.f),
     tracers = (:b, ),
     closure,
@@ -85,7 +86,7 @@ pNHS = model.pressures.pNHS
 # This is a workaround for a quirk with loading a checkpoint
 writing_times = prev_time:sp.save_time:(prev_time+sp.run_time)
 
-simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b, pNHS); 
+simulation.output_writers[:fields] = JLD2Writer(model, (; u, v, w, b, pNHS); 
     filename="$output_folder/output.jld2", 
     schedule=SpecifiedTimes(writing_times),
     overwrite_existing=false,

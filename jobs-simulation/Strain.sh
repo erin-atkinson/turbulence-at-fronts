@@ -4,9 +4,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --job-name=Strain
 #SBATCH --output=../scratch/logs/Strain.txt
-#module load cuda/11.7
-module load julia/1.10.4
-export JULIA_DEPOT_PATH=$SCRATCH/.julia-mist
+
+export JULIA_DEPOT_PATH=$SCRATCH/.julia-trig
 export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 

@@ -7,7 +7,7 @@
 
 export JULIA_DEPOT_PATH=$SCRATCH/.julia-trig
 export JULIA_SCRATCH_TRACK_ACCESS=0
-cd ~/Project
+cd ~/turbulence-at-fronts
 
 output_path=../scratch/turbulence-at-fronts/Strain
 run_time="1e5"
@@ -25,4 +25,5 @@ start_time="-4e5"
 save_time="1e3"
 s="1.0173"
 
-julia-1.10.10/bin/julia -t 24 -- src-fronts/simulation.jl $output_path $run_time $f $H $Nx $Nh $Ny $Nz $Ro $Ri $alpha $Q $c $damping_width $start_time $save_time
+../julia-1.10.10/bin/julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Trillium GPU test"
+
