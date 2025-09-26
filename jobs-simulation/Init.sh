@@ -10,7 +10,7 @@ export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
 output_path=../scratch/turbulence-at-fronts/Strain
-run_time="1e10"
+run_time="10e5"
 f="1e-4"
 H="100"
 Nx=1024
