@@ -177,10 +177,10 @@ for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[fram
         elapsed_time = timestring(Int(time_ns()) - initial_time)
         total_time = timestring(setup_time - initial_time + avg_time * (length(frames) - 10))
         
-        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s, ", "avg: $(avgstr)s, ", "est: $(elapsed_time)s / $(total_time)s")
+        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr), ", "avg: $(avgstr), ", "est: $(elapsed_time) / $(total_time)")
     else
         setupstr = timestring(Int(time_ns()) - start_time)
-        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)s")
+        string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)")
     end
     print(rpad(progstring, 80, ' '), "\r")
 end
