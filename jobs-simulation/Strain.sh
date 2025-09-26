@@ -3,7 +3,9 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --time=24:00:00
 #SBATCH --job-name=Strain
-#SBATCH --output=../scratch/logs/Strain.txt
+#SBATCH --output=../scratch/logs/Strain-%j.txt
+
+module load julia/1.10.10
 
 export JULIA_DEPOT_PATH=$SCRATCH/.julia-trig
 export JULIA_SCRATCH_TRACK_ACCESS=0
@@ -25,4 +27,4 @@ start_time="-4e5"
 save_time="1e3"
 s="1.05"
 
-julia -t 8 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Larger, mist"
+julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Larger, mist"
