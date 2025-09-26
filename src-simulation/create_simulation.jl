@@ -96,7 +96,7 @@ simulation.output_writers[:fields] = JLD2Writer(model, (; u, v, w, b, pNHS);
 
 # Add a checkpointer
 simulation.output_writers[:checkpointer] = Checkpointer(model;
-    schedule=SpecifiedTimes(prev_time+sp.run_time),
+    schedule=SpecifiedTimes(writing_times[end]),
     dir=output_folder,
     cleanup=true,
     overwrite_existing=false,
