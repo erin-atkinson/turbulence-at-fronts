@@ -7,8 +7,6 @@
 using JLD2
 using ImageFiltering: imfilter, Kernel.gaussian
 using OffsetArrays: no_offset_view
-#using CairoMakie
-#using CairoMakie.Colors
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
@@ -98,8 +96,14 @@ end
     ysᶜ = nov(file["grid/yᵃᶜᵃ"])
     ysᶠ = nov(file["grid/yᵃᶠᵃ"])
 
-    zsᶜ = nov(file["grid/zᵃᵃᶜ"])
-    zsᶠ = nov(file["grid/zᵃᵃᶠ"])
+    # Updated Oceananigans messes this up
+    # Previously I directly used JLD2 to get simulation output
+    # because of the lack of parity between Niagara and Mist.
+    # Updating to Trillium made that unnecessary but I'd basically have
+    # to rewrite this whole file
+    # Not doing that
+    zsᶠ = nov(file["grid/z/cᵃᵃᶠ"])
+    zsᶜ = nov(file["grid/z/cᵃᵃᶜ"])
 
     if !halo
         Hx, Hy, Hz = halos(file)
