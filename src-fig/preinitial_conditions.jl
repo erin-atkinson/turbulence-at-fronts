@@ -36,7 +36,7 @@ function preinitial_conditions(sp)
     lines!(ax, [-sp.Lh/2000, -sp.Lh/2000, sp.Lh/2000, sp.Lh/2000, -sp.Lh/2000], [0, -sp.H, -sp.H, 0, 0]; color=:magenta, linestyle=:dashdot)
     ht = heatmap!(ax, xs ./ 1000, zs, σs; colormap=σ_colormap)
     
-    Colorbar(fig[1, 2], ct; label=L"v / \text{ms}^{-1}")
+    Colorbar(fig[1, 2], ct; label=L"v / \text{m}\,\text{s}^{-1}")
     Colorbar(fig[1, 3], ht; label=L"\sigma / \text{hr}^{-1}")
     fig
 end
