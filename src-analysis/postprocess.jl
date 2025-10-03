@@ -159,6 +159,7 @@ end
 
 start_time = Int(time_ns())
 eltimestring()
+println()
 for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[frames], times[frames])
     # Reset counter after giving kernel functions chance to compile for better estimate
     i == 11 && global setup_time = Int(time_ns())
@@ -182,7 +183,7 @@ for (i, frame, iteration, time) in zip(1:length(frames), frames, iterations[fram
         setupstr = timestring(Int(time_ns()) - start_time)
         string("$frame of $(frames[end]), ", "$(eltimestring()), ", "setup: $(setupstr)")
     end
-    print(rpad(progstring, 80, ' '), "\r")
+    print("\r$(rpad(progstring, 60, ' '))")
 end
 println()
 cleanup()

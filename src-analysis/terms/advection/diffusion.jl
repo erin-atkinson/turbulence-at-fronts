@@ -3,16 +3,12 @@ using Oceananigans.Operators
 using Oceananigans.Advection
 using Oceananigans.Utils: SumOfArrays
 #= 
-Calculate estimates of diffusive flux using the difference 
-between WENO and the next higher order scheme.
 =#
 
 # Create advection schemes
-const weno = WENO(grid; order=9)
-const centered = Centered(grid; order=10)
+const weno = WENO(; order=9)
+const centered = Centered(; order=10)
 
-# Get flux from the difference between the above
-# Create all the kernel functions needed to do that
 
 # Momentum
 for v in (:u, :v, :w)
