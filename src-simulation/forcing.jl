@@ -51,8 +51,9 @@ end
 # ---------------------------------------
 
 # ---------------------------------------
-# Effect of the background velocity on the mean field
+# Background velocity forcing
 @inline αf_func(x, y, z, t, f) = -variable_strain_rate(t, sp.α, sp.f) * f
+@inline v_forcing_func(x, y, z, t, v) = -2αf_func(x, y, z, t, v)
 # ---------------------------------------
 
 # ---------------------------------------
@@ -60,12 +61,11 @@ end
 u_forcing = (
     AdvectiveForcing(; u=U),
     Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
-    Forcing(αf_func; field_dependencies=(:u, )),
 )
 v_forcing = (
     AdvectiveForcing(; u=U),
     Relaxation(; rate=sp.σ, mask=sponge_layer, target=0),
-    Forcing(αf_func; field_dependencies=(:v, )),
+    Forcing(v_forcing_func; field_dependencies=(:v, )),
 )
 w_forcing = (
     AdvectiveForcing(; u=U),
