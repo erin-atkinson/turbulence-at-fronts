@@ -53,7 +53,7 @@ end
 # ---------------------------------------
 # Background velocity forcing
 @inline αf_func(x, y, z, t, f) = -variable_strain_rate(t, sp.α, sp.f) * f
-@inline v_forcing_func(x, y, z, t, v) = -2αf_func(x, y, z, t, v)
+@inline v_forcing_func(x, y, z, t, v) = 2αf_func(x, y, z, t, v)
 # ---------------------------------------
 
 # ---------------------------------------
