@@ -27,4 +27,4 @@ start_time="-4e5"
 save_time="1e3"
 s="1.05"
 
-julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Trillium GPU run"
+julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Trillium GPU"

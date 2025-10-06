@@ -12,7 +12,7 @@ export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
 output_path=../scratch/turbulence-at-fronts/Strain
-run_time="2e5"
+run_time="4e5"
 f="1e-4"
 H="100"
 Nx=1024
@@ -27,4 +27,4 @@ start_time="-4e5"
 save_time="1e3"
 s="1.05"
 
-julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Trillium GPU init"
+julia -t 24 -- src-simulation/simulation.jl $output_path $run_time $f $H $Nx $Ny $Nz $Ro $Ri $alpha $Q $c $start_time $save_time $s "Trillium GPU"
