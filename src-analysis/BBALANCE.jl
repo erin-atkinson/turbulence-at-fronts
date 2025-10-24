@@ -7,7 +7,6 @@ include("terms/bbalance/advection.jl")
 include("terms/bbalance/turbulence.jl")
 include("terms/bbalance/laplacian.jl")
 
-
 u_dfm = dfm(fields.u)
 v_dfm = dfm(fields.v)
 w_dfm = dfm(fields.w)
