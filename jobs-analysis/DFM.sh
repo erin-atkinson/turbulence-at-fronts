@@ -5,14 +5,13 @@
 #SBATCH --job-name=ppDFM
 #SBATCH --output=../scratch/logs/ppDFM.txt
 
-module load julia/1.10.10
-export JULIA_DEPOT_PATH=$SCRATCH/.julia-tri
-export JULIA_SCRATCH_TRACK_ACCESS=0
-# Path to ramdisk to avoid too many writes on parallel filesystem
+# Copy installation to RAM disk
 export RAM=/dev/shm/turbulence-at-fronts
-rm $RAM -rf
-mkdir $RAM
+cp -r $HOME/.julia-tri $RAM
 
+# Launch from RAM disk
+export JULIA_DEPOT_PATH=$RAM/.julia-tri
+export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
 # Location of output.jld2
