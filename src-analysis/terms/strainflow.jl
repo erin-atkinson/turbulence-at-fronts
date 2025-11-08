@@ -24,7 +24,7 @@ Ys.data.parent[1, :, 1] .= grid.yᵃᶠᵃ.parent
     
     # Need to bypass periodic halo
     U.data.parent .= -α * Xs.data.parent
-    V.data.parent .= α * Ys.data.parent
+    V.data.parent .= 0 # α * Ys.data.parent
     
     return nothing
 end
