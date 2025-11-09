@@ -9,9 +9,10 @@ include("parameters.jl")
 
 const sp = create_simulation_parameters(simulation_parameters)
 
-function write_comment!(file, comment)
-    file["author"] = "Erin Atkinson"
-    file["comment"] = comment
+function init_jld2!(file, comment, parameters)
+    file["metadata/author"] = "Erin Atkinson"
+    file["metadata/comment"] = comment
+    file["metadata/parameters"] = parameters
     return nothing
 end
 
@@ -91,7 +92,7 @@ simulation.output_writers[:fields] = JLD2Writer(model, (; u, v, w, b, pNHS);
     schedule=SpecifiedTimes(writing_times),
     overwrite_existing=false,
     with_halos=true,
-    init=(file, model)->write_comment!(file, comment)
+    init=(file, model)->init_jld2!(file, comment, sp)
 )
 
 # Add a checkpointer
