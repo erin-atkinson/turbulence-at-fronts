@@ -26,22 +26,33 @@ using Oceananigans
 
 output_folder = ARGS[1]
 
+# Simulation times
 run_time = parse(Float64, ARGS[2])
-f = parse(Float64, ARGS[3])
-H = parse(Float64, ARGS[4])
-Nx = parse(Int64, ARGS[5])
-Ny = parse(Int64, ARGS[6])
-Nz = parse(Int64, ARGS[7])
-Ro = parse(Float64, ARGS[8])
-Ri = parse(Float64, ARGS[9])
-α = parse(Float64, ARGS[10])
-Q = parse(Float64, ARGS[11])
-c = parse(Float64, ARGS[12])
 start_time = parse(Float64, ARGS[13])
 save_time = parse(Float64, ARGS[14])
-s = parse(Float64, ARGS[15])
-comment = ARGS[16]
 
-simulation_parameters = (; run_time, f, H, Nx, Ny, Nz, Ro, Ri, α, Q, c, start_time, save_time, s)
+# Coriolis frequency
+f = parse(Float64, ARGS[3])
+
+# Grid extent
+Lx = parse(Float64, ARGS[4])
+Lh = parse(Float64, ARGS[5])
+H = parse(Float64, ARGS[6])
+
+# Grid sizes
+Nx = parse(Int64, ARGS[7])
+Nh = parse(Int64, ARGS[8])
+Ny = parse(Int64, ARGS[9])
+Nz = parse(Int64, ARGS[10])
+
+# Simulation
+Ro = parse(Float64, ARGS[11])
+Ri = parse(Float64, ARGS[12])
+α = parse(Float64, ARGS[13])
+Q = parse(Float64, ARGS[14])
+
+comment = ARGS[15]
+
+simulation_parameters = (; run_time, f, Lx, Lh, H, Nx, Nh, Ny, Nz, Ro, Ri, α, Q, c, start_time, save_time)
 
 include("create_simulation.jl")

@@ -16,7 +16,7 @@ default_inputs = (;
 
 @inline function create_simulation_parameters(input_parameters=(; ))
     ip = (; default_inputs..., input_parameters...)
-    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q, c=ip.c, s=ip.s
+    let f=ip.f, Ro=ip.Ro, Ri=ip.Ri, Nx=ip.Nx, Ny=ip.Ny, H=ip.H, Q=ip.Q, c=ip.c, Lh=ip.Lh, Lx=ip.Lx, Nh=ip.Nh
         # Velocity scale is set
         U = 0.1
 
@@ -29,13 +29,11 @@ default_inputs = (;
         # Pick a length scale using Rossby number
         ℓ = U / (f * Ro)
         
-        Lh = 2ℓ
-        Nh = 2*((13Nx) ÷ 32) # Even
-        Lx = x_width(Nx, Nh, Lh, s)
+        Lh = Lh * ℓ # About 2 for Ro = 0.4 works
+        Lx = Lx * ℓ
         
         Ly = Lh * Ny / Nh
         Lz = 1.5H
-        
         
         # Make a guess of N₀² and a
         N₀² = f^2 * Ro * ℓ^2 / H^2 / A(δ)
