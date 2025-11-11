@@ -1,62 +1,76 @@
 # base_state.jl
 # Functions describing the initial state of the simulations
 
-using SpecialFunctions
 using Oceananigans: fill_halo_regions!
 
-@inline g(s) = log(1 + exp(s))
+const A_Ro = 0.7698
 
-@inline γ(s, δ) = -1 + δ * (erf(s) + 1) / 2
-@inline γ′(s, δ) = δ * exp(-s^2) / sqrt(π)
-@inline A(δ) = maximum(range(-3, 3, 1000)) do s
-    γ(s, δ) * (γ′(s+5e-7, δ) - γ′(s-5e-7, δ)) / 1e-6 + γ′(s, δ)^2
-end
+@inline G(s) = log(1 + exp(s))
+@inline g(s) = 1 / (1 + exp(-s))
+@inline g′(s) = exp(-s) / (1 + exp(-s))^2
 
-@inline mixed_layer_depth(x, sp) = sp.H * γ(x/sp.ℓ, sp.δ)
+# Background stratification
+@inline b∞(z, sp) = -sp.λ * sp.H * sp.N₀² * G(-(z + sp.H) / (sp.λ * sp.H))
 
-# Actual bottom boundary is given by fixed point
-@inline h₀(x, sp) = h₀(x, sp, Val(10))
-@inline h₀(x, sp, ::Val{0}) = -sp.H
-@inline h₀(x, sp, ::Val{T}) where T = mixed_layer_depth(x + sp.a * (h₀(x, sp, Val(T-1)) + sp.H/2), sp)
-
+# Buoyancy
 @inline function front_buoyancy(x, z, sp)
-    # Well-mixed, Ri achieved by tilting isopycnals
-    MLD = mixed_layer_depth(x + sp.a * (z + sp.H/2), sp)
-    return sp.N₀² * (z - sp.λ * sp.H * g((z - MLD)/(sp.λ * sp.H)))
+    x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
+    z₁ = (z + sp.H) / (sp.λ * sp.H)
+    
+    return (sp.Δb / 2) * (tanh(x₁) + 1) * g(z₁) + b∞(z, sp)
 end
+
+# Stratification
+@inline function front_N²(x, z, sp)
+    x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
+    z₁ = (z + sp.H) / (sp.λ * sp.H)
+    
+    return (
+          (sp.a * sp.Δb / 2sp.H) * sech(x₁)^2 * g(z₁)
+        + (sp.Δb / (2sp.λ * sp.H)) * (tanh(x₁) + 1) * g′(z₁)
+        + sp.N₀² * g(-z₁)
+    )
+end
+
+# Horizontal buoyancy gradient
+@inline function front_M²(x, z, sp)
+    x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
+    z₁ = (z + sp.H) / (sp.λ * sp.H)
+    
+    return (sp.Δb / 2sp.ℓ) * sech(x₁)^2 * g(z₁)
+end
+
+# Thermal wind shear
+@inline front_S(x, z, sp) = front_M²(x, z, sp) / sp.f
 
 @inline function approximate_front_velocity(x, z, sp)
-    # We can approximate the velocity far above the thermocline (-(λ + δ)H << z)
-    MLD = mixed_layer_depth(x + sp.a * (z + sp.H/2), sp)
-    return sp.N₀² * max(MLD - h₀(x, sp), 0) / sp.f / sp.a
-end
-
-@inline function approximate_front_vorticity(x, z, sp)
-    return (approximate_front_velocity(x + 5e-6sp.ℓ, 0, sp) - approximate_front_velocity(x - 5e-6sp.ℓ, 0, sp)) / (1e-5sp.ℓ)
-end
-
-@inline function front_M²(x, z, sp)
-    return (front_buoyancy(x + 5e-6sp.ℓ, z, sp) - front_buoyancy(x - 5e-6sp.ℓ, z, sp)) / (1e-5sp.ℓ)
-end
-
-@inline front_shear(x, z, sp) = front_M²(x, z, sp) / sp.f
+    x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
+    x₂ = x / sp.ℓ + sp.a * (-sp.H + sp.H / 2) / sp.H
+    z₁ = (z + sp.H) / (sp.λ * sp.H)
     
-@inline function front_N²(x, z, sp)
-    return (front_buoyancy(x, z + 5e-6sp.H, sp) - front_buoyancy(x, z - 5e-6sp.H, sp)) / 1e-5sp.H
+    return (sp.H * sp.Δb / (2sp.ℓ * sp.f)) * (tanh(x₁) - tanh(x₂)) * g(z₁)
 end
 
 @inline front_Ri(x, z, sp) = front_N²(x, z, sp) / front_shear(x, z, sp)^2
 
 @inline function minimum_Ri(sp)
-    # Minimum Ri occurs in the centre of the front throughout the mixed layer
-    return minimum(x->front_Ri(x, 0, sp), range(-3sp.ℓ, 3sp.ℓ, 1000))
+    return 2sp.a * sp.ℓ^2 * sp.f^2 / sp.H / sp.Δb
 end
 
-@inline function minimum_Ro(sp)
+@inline function maximum_front_velocity(sp)
+    return 2sp.a^2 * sp.H * sp.Δb / sp.ℓ / sp.f 
+end
+
+@inline function maximum_Ro(sp)
     # Maximum Rossby number occurs at the surface
-    return minimum(range(-3sp.ℓ, 3sp.ℓ, 1000)) do x
-        approximate_front_vorticity(x, 0, sp) / sp.f
-    end
+    A_Ro * maximum_front_velocity(sp) / sp.ℓ / sp.f 
+end
+
+@inline function create_front_parameters(ip)
+    λ = 0.1
+    a = (ip.Ro * ip.Ri / A_Ro)^(1/3)'
+    ℓ = sqrt(A_Ro * a^2 * ip.H * ip.Δb / 2ip.f^2 / ip.Ro)
+    return merge(ip, (; λ, a, ℓ))
 end
 
 @inline function front_initial_conditions(grid::RectilinearGrid, sp)
