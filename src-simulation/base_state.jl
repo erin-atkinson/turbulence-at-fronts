@@ -3,7 +3,11 @@
 
 using Oceananigans: fill_halo_regions!
 
-const A_Ro = 0.7698
+
+
+@inline f(s) = 1 + tanh(s)
+@inline f′(s) = sech(s)^2
+const f′′_max = maximum(s->-2tanh(s) * sech(s)^2, range(-10, 10, 1000))
 
 @inline G(s) = log(1 + exp(s))
 @inline g(s) = 1 / (1 + exp(-s))
@@ -17,7 +21,7 @@ const A_Ro = 0.7698
     x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
     z₁ = (z + sp.H) / (sp.λ * sp.H)
     
-    return (sp.Δb / 2) * (tanh(x₁) + 1) * g(z₁) + b∞(z, sp)
+    return (sp.Δb / 2) * f(x₁) * g(z₁) + b∞(z, sp)
 end
 
 # Stratification
@@ -26,8 +30,8 @@ end
     z₁ = (z + sp.H) / (sp.λ * sp.H)
     
     return (
-          (sp.a * sp.Δb / 2sp.H) * sech(x₁)^2 * g(z₁)
-        + (sp.Δb / (2sp.λ * sp.H)) * (tanh(x₁) + 1) * g′(z₁)
+          (sp.a * sp.Δb / 2sp.H) * f′(x₁) * g(z₁)
+        + (sp.Δb / (2sp.λ * sp.H)) * f(x₁) * g′(z₁)
         + sp.N₀² * g(-z₁)
     )
 end
@@ -37,7 +41,7 @@ end
     x₁ = x / sp.ℓ + sp.a * (z + sp.H / 2) / sp.H
     z₁ = (z + sp.H) / (sp.λ * sp.H)
     
-    return (sp.Δb / 2sp.ℓ) * sech(x₁)^2 * g(z₁)
+    return (sp.Δb / 2sp.ℓ) * f′(x₁) * g(z₁)
 end
 
 # Thermal wind shear
@@ -48,7 +52,7 @@ end
     x₂ = x / sp.ℓ + sp.a * (-sp.H + sp.H / 2) / sp.H
     z₁ = (z + sp.H) / (sp.λ * sp.H)
     
-    return (sp.H * sp.Δb / (2sp.ℓ * sp.f)) * (tanh(x₁) - tanh(x₂)) * g(z₁)
+    return (sp.a * sp.H * sp.Δb / (2sp.ℓ * sp.f)) * (f(x₁) - f(x₂)) * g(z₁)
 end
 
 @inline front_Ri(x, z, sp) = front_N²(x, z, sp) / front_shear(x, z, sp)^2
@@ -63,13 +67,13 @@ end
 
 @inline function maximum_Ro(sp)
     # Maximum Rossby number occurs at the surface
-    A_Ro * maximum_front_velocity(sp) / sp.ℓ / sp.f 
+    f′′_max * maximum_front_velocity(sp) / sp.ℓ / sp.f 
 end
 
 @inline function create_front_parameters(ip)
     λ = 0.1
     a = (ip.Ro * ip.Ri / A_Ro)^(1/3)'
-    ℓ = sqrt(A_Ro * a^2 * ip.H * ip.Δb / 2ip.f^2 / ip.Ro)
+    ℓ = sqrt(f′′_max * a^2 * ip.H * ip.Δb / 2ip.f^2 / ip.Ro)
     return merge(ip, (; λ, a, ℓ))
 end
 
