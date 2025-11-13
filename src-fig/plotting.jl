@@ -15,11 +15,14 @@ const b_levels = range(-0.01, -0.004, 60)
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
-iterations(file) = keys(file["timeseries/t"])
-iterations(filename::String) = jldopen(iterations, filename)
+function iterations_times(file)
+    iterations = keys(file["timeseries/t"])
+    times = [file["timeseries/t/$i"] for i in iterations]
 
-times(file) = [file["timeseries/t/$i"] for i in iterations(file)]
-times(filename::String) = jldopen(times, filename)
+    return iterations, times
+end
+
+iterations_times(filename::String) = jldopen(iterations_times, filename)
 
 @inline prettytime(t) = @sprintf "%06.1f" t
 
