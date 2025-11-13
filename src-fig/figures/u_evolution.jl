@@ -14,12 +14,15 @@ function u_evolution(
         mixed_depth=false,
     )
 
-    iterations, times = iterations_times(foldername)
-    sp = simulation_parameters(foldername)
-    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
-    inds = centre_indices(foldername)
+    OUTPUT = joinpath(foldername, "OUTPUT.jld2")
+    DFM = joinpath(foldername, "DFM.jld2")
+
+    iterations, times = iterations_times(DFM)
+    sp = simulation_parameters(DFM)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(DFM)
+    inds = centre_indices(DFM)
     colormap = to_colormap(:balance)
-    z_indᶜ = zᶜbounds(foldername, z)
+    z_indᶜ = zᶜbounds(DFM, z)
     
     fig = Figure(; 
         size=(1000, 400),
@@ -31,11 +34,11 @@ function u_evolution(
 
     U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, yz in 1:1] .* background
 
-    u_dfm = 100 * (timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U)
-    uh = 100 * (timeseries_of(a->filt(a[:, :, z_indᶜ], σh), joinpath(foldername, "output.jld2"), "u", iterations) .+ U)
+    u_dfm = 100 * (timeseries_of(a->filt(a, σ), DFM, "u_dfm", iterations) .+ U)
+    uh = 100 * (timeseries_of(a->filt(a[:, :, z_indᶜ], σh), OUTPUT, "u", iterations) .+ U)
     
-    b_dfm = timeseries_of(a->filt(a, σ), joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
-    bh = timeseries_of(a->filt(a[:, :, z_indᶜ], 1, 1), joinpath(foldername, "output.jld2"), "b", iterations)
+    b_dfm = timeseries_of(a->filt(a, σ), DFM, "b_dfm", iterations)
+    bh = timeseries_of(a->filt(a[:, :, z_indᶜ], 1, 1), OUTPUT, "b", iterations)
 
     MLD = b_dfm .- (b_dfm[:, :, end:end] .- (b_levels[3] - b_levels[1])) 
     
