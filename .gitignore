@@ -10,3 +10,6 @@ b_timeseries.png
 *.svg
 *.obj
 3DFigures.ipynb
+.julia-tri
+.julia-trig
+
