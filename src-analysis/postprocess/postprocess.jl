@@ -49,7 +49,7 @@ nextrawfields = NamedTuple(Symbol(k, :_next) => fds[k][2] for k in fieldnames)
 
 # Setup background strain
 include("../terms/strainflow.jl")
-rawfields = merge(rawfields, nextrawfields, (; U, V, W))
+input_fields = merge(rawfields, nextrawfields, (; U, V, W))
 
 # Initialise a clock
 clock = Clock(; time=times[1])
@@ -106,7 +106,7 @@ dt = @elapsed update_clock!(clock, iterations, times, frames[1])
 @printf "Updated clock! Elapsed: %.2f\n" dt
 
 print("Updating fields...\r")
-dt = @elapsed update_fields!(rawfields, fds, clock, frames[1])
+dt = @elapsed update_fields!(input_fields, fds, clock, frames[1])
 @printf "Updated fields! Elapsed: %.2f\n" dt
 
 for (k, dependency_field) in pairs(dependency_fields)
@@ -126,7 +126,7 @@ for (i, frame) in enumerate(frames)
     update_clock!(clock, iterations, times, frame)
 
     # Update inputs
-    update_fields!(rawfields, fds, clock, frame)
+    update_fields!(input_fields, fds, clock, frame)
 
     compute_at!(dependency_fields, frame)
 

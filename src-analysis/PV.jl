@@ -8,13 +8,13 @@ include("terms/pv/q.jl")
 include("terms/pv/uq.jl")
 include("terms/pv/Vq.jl")
 
-q = Field(KernelFunctionOperation{Center, Center, Center}(q_func, grid, clock, rawfields, (; ), sp))
+q = Field(KernelFunctionOperation{Center, Center, Center}(q_func, grid, clock, input_fields, (; ), sp))
 
-uq = Field(KernelFunctionOperation{Face, Center, Center}(uq_func, grid, clock, rawfields, (; q), sp))
-wq = Field(KernelFunctionOperation{Center, Center, Face}(wq_func, grid, clock, rawfields, (; q), sp))
-div_Uq = Field(KernelFunctionOperation{Center, Center, Center}(div_Uq_func, grid, clock, rawfields, (; q), sp))
+uq = Field(KernelFunctionOperation{Face, Center, Center}(uq_func, grid, clock, input_fields, (; q), sp))
+wq = Field(KernelFunctionOperation{Center, Center, Face}(wq_func, grid, clock, input_fields, (; q), sp))
+div_Uq = Field(KernelFunctionOperation{Center, Center, Center}(div_Uq_func, grid, clock, input_fields, (; q), sp))
 
-Vq = Field(KernelFunctionOperation{Center, Center, Center}(Vq_func, grid, clock, rawfields, (; q), sp))
+Vq = Field(KernelFunctionOperation{Center, Center, Center}(Vq_func, grid, clock, input_fields, (; q), sp))
 
 q_dfm = dfm(q)
 
