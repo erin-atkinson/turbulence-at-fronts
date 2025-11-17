@@ -51,16 +51,16 @@ DTKEDt3D_dependencies = (
 
 # Residual of the TKE balance
 @inline function ε_func(i, j, k, grid, clock, fields, dependency_fields, sp)
-    DTKEDt = dependency_fields.DTKEDt
+    DTKEDt = @inbounds dependency_fields.DTKEDt[i, j, k]
 
-    LSP = dependency_fields.LSP
-    VSP = dependency_fields.VSP
+    LSP = @inbounds dependency_fields.LSP[i, j, k]
+    VSP = @inbounds dependency_fields.VSP[i, j, k]
 
-    BFLUX = dependency_fields.BFLUX
+    BFLUX = @inbounds dependency_fields.BFLUX[i, j, k]
 
-    DSP = dependency_fields.DSP
+    DSP = @inbounds dependency_fields.DSP[i, j, k]
     
-    return @inbounds DTKEDt[i, j, k] - (LSP[i, j, k] + VSP[i, j, k] + BFLUX[i, j, k] + DSP[i, j, k])
+    return DTKEDt - (LSP + VSP + BFLUX + DSP)
 end
 
 ε_dependencies = (

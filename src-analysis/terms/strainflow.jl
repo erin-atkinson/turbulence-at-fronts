@@ -1,9 +1,11 @@
 using Oceananigans.Fields: ZeroField
 
-@inline function variable_strain_rate(t)
+@inline function variable_strain_rate(t, sp)
     turnon = max(1-exp(-sp.f * t / 15), 0)
     return sp.α * turnon
 end
+
+@inline variable_strain_rate(t) = variable_strain_rate(t, sp)
 
 # Background velocity fields
 U = Field{Face, Nothing, Nothing}(grid)

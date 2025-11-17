@@ -1,6 +1,6 @@
 @inline function DSP3D_func(i, j, k, grid, clock, fields, dependency_fields, sp)
 
-    α = variable_strain_rate(clock.time)
+    α = variable_strain_rate(clock.time, sp)
 
     u = fields.u
     v = fields.v
