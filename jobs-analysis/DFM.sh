@@ -12,7 +12,7 @@ echo "Copying installation to RAM disk"
 export RAM=/dev/shm/turbulence-at-fronts
 mkdir $RAM
 
-cp -r $HOME/.julia-tri $RAM
+cp -r $HOME/turbulence-at-fronts/.julia-tri $RAM
 
 # Launch from RAM disk
 echo "Running..."

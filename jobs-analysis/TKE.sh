@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=192
-#SBATCH --time=13:00:00
+#SBATCH --time=4:00:00
 #SBATCH --job-name=ppTKE
 #SBATCH --output=../scratch/logs/ppTKE.txt
 
@@ -12,7 +12,7 @@ echo "Copying installation to RAM disk"
 export RAM=/dev/shm/turbulence-at-fronts
 mkdir $RAM
 
-cp -r $HOME/.julia-tri $RAM
+cp -r $HOME/turbulence-at-fronts/.julia-tri $RAM
 
 # Launch from RAM disk
 echo "Running..."
