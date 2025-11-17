@@ -2,10 +2,11 @@ using Oceananigans
 using JLD2
 using Printf
 
-using Oceananigans.Fields: compute_at!, instantiated_location
+using Oceananigans.Fields: compute_at!
+using Oceananigans.OutputWriters: saveproperty!
+
 include("update_clock.jl")
 include("update_fields.jl")
-include("write_outputs.jl")
 
 t0 = time()
 
@@ -25,16 +26,19 @@ BUFFER = joinpath(buffer, "$scriptname.jld2")
 # Path to temp output
 TEMP = joinpath(buffer, "temp_$scriptname.jld2")
 
-# Parameters
-parameterfilename = joinpath(foldername, "parameters.jld2")
-sp = jldopen(file->file["simulation"], parameterfilename)
-
 # Final output folder
 PROCESSED = joinpath(foldername, "$scriptname.jld2")
 
 # Read simulation state
 fds = FieldDataset(RAW; backend=OnDisk())
+
+if "parameters" ∉ keys(fds.metadata)
+    parameterfilename = joinpath(foldername, "parameters.jld2")
+    fds.metadata["parameters"] = jldopen(file->file["simulation"], parameterfilename)
+end
+
 fieldnames = Symbol.(keys(fds.fields))
+const sp = fds.metadata["parameters"]
 
 # Setup grid, times and iterations
 grid = fds.u.grid
@@ -70,34 +74,26 @@ In addition, it can redefine `frames` to process only a subset of frames
 =#
 dependency_fields = NamedTuple()
 temp_fields = NamedTuple()
+skip_update = ()
 cleanup() = nothing
 @info "Including $scriptname.jl"
 include("../$scriptname.jl")
 
-# Can be cleaned up in 0.100.8
-output_fts = NamedTuple(
-    k => FieldTimeSeries(
-        instantiated_location(v), 
-        grid, 
-        times; 
-        path = BUFFER, 
-        name = k,
-        backend = OnDisk()
-    )
-    for (k, v) in pairs(output_fields)
+output_fds = FieldDataset(times, output_fields; 
+    backend = OnDisk(), 
+    path = BUFFER,
+    metadata = fds.metadata
 )
 
-temp_fts = NamedTuple(
-    k => FieldTimeSeries(
-        instantiated_location(v), 
-        grid, 
-        times; 
-        path = TEMP, 
-        name = k,
-        backend = OnDisk()
+temp_fds = if length(temp_fields) > 0
+    FieldDataset(times, temp_fields; 
+        backend = OnDisk(), 
+        path = TEMP,
+        metadata = fds.metadata
     )
-    for (k, v) in pairs(temp_fields)
-)
+else
+    nothing
+end
 
 # Helpful for debugging to print times for all
 @info "Performing first computation..."
@@ -106,12 +102,12 @@ dt = @elapsed update_clock!(clock, iterations, times, frames[1])
 @printf "Updated clock! Elapsed: %.2f\n" dt
 
 print("Updating fields...\r")
-dt = @elapsed update_fields!(input_fields, fds, clock, frames[1])
+dt = @elapsed update_fields!(input_fields, fds, clock, frames[1]; skip_update)
 @printf "Updated fields! Elapsed: %.2f\n" dt
 
 for (k, dependency_field) in pairs(dependency_fields)
     print("Calculating $k...\r")
-    local dt = @elapsed compute_at!(dependency_field, frames[1])
+    local dt = @elapsed compute_at!(dependency_field, frames[2])
     @printf "Calculated %s! Elapsed: %.2f\n" k dt
 end
 
@@ -126,12 +122,14 @@ for (i, frame) in enumerate(frames)
     update_clock!(clock, iterations, times, frame)
 
     # Update inputs
-    update_fields!(input_fields, fds, clock, frame)
+    update_fields!(input_fields, fds, clock, frame; skip_update)
 
-    compute_at!(dependency_fields, frame)
-
-    write_outputs(output_fts, output_fields, iteration, t)
-    write_outputs(temp_fts, temp_fields, iteration, t)
+    for field in dependency_fields
+        compute_at!(field, t)
+    end
+    
+    set!(output_fds, iteration, t; output_fields...)
+    temp_fds != nothing && set!(temp_fds, iteration, t; temp_fields...)
 
     # Little bit of timekeeping for convenience
     tstr = if i < 11
@@ -151,10 +149,15 @@ println()
 @info "Cleaning up..."
 cleanup()
 
+# Write grid to file
+jldopen(file->saveproperty!(file, "grid", grid), BUFFER, "a")
+
 if !isequal(BUFFER, PROCESSED)
     @info "Moving from $BUFFER to $PROCESSED"
     mv(BUFFER, PROCESSED; force=true)
 end
 rm(TEMP; force=true)
+
+
 
 @info "Done!"
