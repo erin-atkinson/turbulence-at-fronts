@@ -26,3 +26,5 @@ Vq_dfm = dfm(Vq)
 
 dependency_fields = (; q, uq, wq, div_Uq, Vq, q_dfm, uq_dfm, wq_dfm, div_Uq_dfm, Vq_dfm)
 output_fields = (; q_dfm, uq_dfm, wq_dfm, div_Uq_dfm, Vq_dfm)
+
+skip_update = (:pNHS, :u_next, :v_next, :w_next, :b_next, :pNHS_next)
