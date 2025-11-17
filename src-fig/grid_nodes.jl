@@ -45,3 +45,5 @@ function grid_nodes(file; with_halos=false, reshape=false)
 
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ
 end
+
+grid_nodes(filename::String; kwargs...) = jldopen(file->grid_nodes(file; kwargs...), filename)
