@@ -43,3 +43,34 @@ VSP_dependencies = (
     :v_next_dfm,
     :w_next_dfm,
 )
+
+@inline function GSP3D_func(i, j, k, grid, clock, fields, dependency_fields, sp)
+
+    v = fields.v
+    w = fields.w
+
+    v_dfm = dependency_fields.v_dfm
+    w_dfm = dependency_fields.w_dfm
+    b_dfm = dependency_fields.b_dfm
+
+    b_next_dfm = dependency_fields.b_next_dfm
+
+    W = fields.W
+    
+    total_w = SumOfArrays{2}(w, W)
+    
+    wv = advective_momentum_flux_density_Wv(i, j, k, grid, weno, total_w, v)
+
+    wv_dfm = advective_momentum_flux_density_Wv(i, j, k, grid, weno, total_w, v_dfm)
+    
+    vz = ℑxᶜᵃᵃ(i, j, k, grid, ∂xᶠᶜᶜ, a_avg, b_dfm, b_next_dfm) / sp.f
+    
+    return -(wv - wv_dfm) * vz
+end
+
+GSP_dependencies = (
+    :v_dfm,
+    :w_dfm,
+    :b_dfm,
+    :b_next_dfm,
+)
