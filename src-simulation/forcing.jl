@@ -15,9 +15,9 @@ end
     (z_bottom, ) = node(i, j, 0, grid, Nothing(), Nothing(), Center())
 
     b = @inbounds model_fields.b[i, j, k]
-    tb = @inbounds model_fields.b[i, j, 0]# + sp.N₀² * (z - z_bottom)
+    tb = @inbounds model_fields.b[i, j, 0] + sp.N₀² * (z - z_bottom)
     
-    return sp.σ * (tb - b) * sponge_layer(x, y, z)
+    return sp.σ * min(tb - b, 0) * sponge_layer(x, y, z)
 end
 # ---------------------------------------
 
