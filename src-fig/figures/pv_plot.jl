@@ -11,13 +11,15 @@ function instability_plot(
         ht_kw=(; ),
         σ=0,
     )
+
+    PV = joinpath(foldername, "PV.jld2")
     
-    iterations, times = iterations_times(foldername)
-    sp = simulation_parameters(foldername)
-    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
-    inds = centre_indices(foldername)
+    iterations, times = iterations_times(PV)
+    sp = simulation_parameters(PV)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(PV)
+    inds = center_indices(PV)
     colormap = to_colormap(:diff)
-    #colormap = [repeat(colormap[1:1], 2*length(colormap)÷4); colormap]
+    
     fig_kw = (;
         size=(800, 300),
         fig_kw...
@@ -28,13 +30,13 @@ function instability_plot(
     iterations = iterations[frames]
     times = times[frames]
 
-    Vq = timeseries_of(a->filt(a, σ), joinpath(foldername, "PV.jld2"), "Vq_dfm", iterations)
+    Vq = timeseries_of(a->filt(a, σ), PV, "Vq_dfm", iterations)
     
     # Set each title
 
     titles = map(times) do t
-        t_val = prettytime(sp.f * t / 2π; l=1, digits=1)
-        hr_val = prettytime(t / 3600; l=3, digits=0)
+        t_val = @sprintf "%03.1f" sp.f * t / 2π
+        hr_val = @sprintf "%03.0f" t / 3600
         L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end
     

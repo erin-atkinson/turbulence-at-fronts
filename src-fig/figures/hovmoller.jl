@@ -9,12 +9,14 @@ function hovmoller(
         background=false,
     )
 
-    iterations, times = iterations_times(foldername)
-    sp = simulation_parameters(foldername)
-    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
-    inds = centre_indices(foldername)
+    DFM = joinpath(foldername, "DFM.jld2")
+    
+    iterations, times = iterations_times(DFM)
+    sp = simulation_parameters(DFM)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(DFM)
+    inds = center_indices(DFM)
     colormap = to_colormap(:balance)
-    z_indᶜ = zᶜbounds(foldername, z)
+    z_indᶜ = zᶜbounds(DFM, z)
     
     fig = Figure(; 
         size=(800, 400),
@@ -23,11 +25,11 @@ function hovmoller(
 
     U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ] .* background
     
-    u = 100 * (timeseries_of(a->filt(a[:, z_indᶜ], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations) .+ U)
-    b = timeseries_of(a->a[:, z_indᶜ], joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
+    u = 100 * (timeseries_of(a->filt(a[:, z_indᶜ], σ), DFM, "u_dfm", iterations) .+ U)
+    b = timeseries_of(a->a[:, z_indᶜ], DFM, "b_dfm", iterations)
     
-    u_surface = 100 * (timeseries_of(a->filt(a[:, end], σ), joinpath(foldername, "DFM.jld2"), "u_dfm", iterations))
-    b_surface = timeseries_of(a->a[:, end], joinpath(foldername, "DFM.jld2"), "b_dfm", iterations)
+    u_surface = 100 * (timeseries_of(a->filt(a[:, end], σ), DFM, "u_dfm", iterations))
+    b_surface = timeseries_of(a->a[:, end], DFM, "b_dfm", iterations)
 
     b_offset = b[1:1, inds[1:1]] .- b[:, inds[1:1]]
     

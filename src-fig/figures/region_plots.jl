@@ -14,21 +14,21 @@ function tke_by_region(
         ln_kw=(; )
     )
 
-    iterations, times = iterations_times(foldername)
-    sp = simulation_parameters(foldername)
-    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
-    inds = centre_indices(foldername)
+    TKE = joinpath(foldername, "TKE.jld2")
     
-    term_names = ["VSP", "LSP", "BFLUX", "DSP", "ε"]
-    term_labels = [L"\text{VSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"-\varepsilon"]
+    iterations, times = iterations_times(TKE)
+    sp = simulation_parameters(TKE)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(TKE)
+    inds = center_indices(TKE)
+    
+    term_names = ["VSP", "GSP", "LSP", "BFLUX", "DSP", "ε"]
+    term_labels = [L"\text{VSP}", L"\text{GSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"-\varepsilon"]
 
     # Plot in front and in arrest region
     
     fig = Figure(; size=(800, 250), fig_kw...)
 
     region_scenes = (; arrest=fig[1, 2], total=fig[1, 1], )
-
-    TKE = joinpath(foldername, "TKE.jld2")
 
     Δm = 1.027 * sp.Lh * sp.Lz * sp.Ly / (sp.Nh * sp.Nz)
     Δt = 3600 * 24
@@ -41,7 +41,7 @@ function tke_by_region(
         terms = map(term_names[1:end-1]) do term_name
             timeseries_of(a->sum(mask .* a), TKE, term_name, iterations) * Δm * Δt / ΔE
         end
-        ε = (timeseries_of(a->sum(mask .* a), TKE, "DTKEDt", iterations) * Δm * Δt / ΔE) .- sum(terms)
+        ε = (timeseries_of(a->sum(mask .* a), TKE, "DTKEDt", iterations) * Δm * Δt / ΔE) .- sum(terms[[1, 3, 4, 5]])
         [terms; [-ε]]
     end
     termmax = mapreduce(max, terms.total) do term

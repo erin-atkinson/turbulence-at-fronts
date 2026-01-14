@@ -14,13 +14,13 @@ function u_evolution(
         mixed_depth=false,
     )
 
-    OUTPUT = joinpath(foldername, "OUTPUT.jld2")
+    OUTPUT = joinpath(foldername, "output.jld2")
     DFM = joinpath(foldername, "DFM.jld2")
 
     iterations, times = iterations_times(DFM)
     sp = simulation_parameters(DFM)
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(DFM)
-    inds = centre_indices(DFM)
+    inds = center_indices(DFM)
     colormap = to_colormap(:balance)
     z_indᶜ = zᶜbounds(DFM, z)
     
@@ -45,8 +45,8 @@ function u_evolution(
     u_max = max(maximum(abs, u_dfm[:, inds, :]), maximum(abs, uh[:, inds, :]))
     
     titles = map(times) do t
-        t_val = prettytime(sp.f * t / 2π; l=1, digits=1)
-        hr_val = prettytime(t / 3600; l=3, digits=0)
+        t_val = @sprintf "%03.1f" sp.f * t / 2π
+        hr_val = @sprintf "%03.0f" t / 3600
         
         L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end

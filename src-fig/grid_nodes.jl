@@ -19,6 +19,8 @@ function center_indices(file)
     return ((sp.Nx - sp.Nh) ÷ 2):((sp.Nx + sp.Nh) ÷ 2)
 end
 
+center_indices(filename::String) = jldopen(center_indices, filename)
+
 nov = no_offset_view
 @inline halos(file) = file["grid/Hx"], file["grid/Hz"], file["grid/Hz"]
 

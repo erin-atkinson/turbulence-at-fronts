@@ -2,11 +2,11 @@
 # Clockwise, without end point
 regions = (;
     arrest = [
-        Point2f(-1750, -30),
+        Point2f(-1650, -30),
         Point2f(-2000, -3),
-        Point2f(-1700, -3),
-        Point2f(-1050, -30),
-        Point2f(-1050, -55),
+        Point2f(-1500, -3),
+        Point2f(-850, -30),
+        Point2f(-850, -55),
     ],
     total = [
         Point2f(-2500, -3), 

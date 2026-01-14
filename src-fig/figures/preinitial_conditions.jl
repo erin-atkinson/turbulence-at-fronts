@@ -1,6 +1,6 @@
 using Oceananigans
-include("../src-simulation/grid_faces.jl")
-include("../src-simulation/base_state.jl")
+include("../../src-simulation/grid_faces.jl")
+include("../../src-simulation/base_state.jl")
 
 @inline function σ(z, sp)
     s = min((z+sp.Lz) / (sp.Lz-sp.H), 1)
