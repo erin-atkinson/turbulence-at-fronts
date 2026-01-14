@@ -2,6 +2,7 @@ using Oceananigans
 using CUDA
 using JLD2
 using Oceananigans.BoundaryConditions: fill_halo_regions!
+using Printf
 
 include("base_state.jl")
 include("grid_faces.jl")
@@ -16,13 +17,8 @@ function init_jld2!(file, comment, parameters)
     return nothing
 end
 
-# Save the parameters to a file
 if !isdir("$output_folder")
     mkdir(output_folder)
-end
-jldopen("$output_folder/parameters.jld2", "w") do file
-    file["simulation"] = sp
-    write_comment!(file, comment)
 end
 
 # Get the grid
@@ -112,7 +108,32 @@ simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 simulation.callbacks[:advection] = Callback(calculate_U_callback, IterationInterval(1); parameters=sp)
 
 # Output progress
-progress(sim) = print(rpad("\rRunning simulation t=$(round(time(sim); digits=2)) iter=$(iteration(sim))", 80))
+const prev_t = [0.0]
+const prev_wall_time = [0.0]
+function progress(sim)
+    i = iteration(sim)
+
+    t = time(sim)
+    Δ_time = t - prev_t[1]
+    prev_t[1] = t
+    t_str = @sprintf " -- Time: %.3e" t
+
+    wall_time = sim.run_wall_time
+    Δ_wall_time = wall_time - prev_wall_time[1]
+    prev_wall_time[1] = wall_time
+
+    t_per_hour = Δ_time / (Δ_wall_time / 3600)
+    tph_str = @sprintf " -- Time / wall hour: %.3e" t_per_hour
+
+    remaining_time = wall_time / 3600 + (sim.stop_time - t) / t_per_hour
+    remaining_str = @sprintf "%.1f hr / %.1f hr" (wall_time / 3600) remaining_time
+
+    str = string("Iteration: ", i, t_str, tph_str, " -- Progress: ", remaining_str)
+    
+    print(rpad("\r$str", 100))
+
+    return nothing
+end
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 
 @info simulation
