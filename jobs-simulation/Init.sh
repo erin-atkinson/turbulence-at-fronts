@@ -7,12 +7,7 @@
 
 module load julia/1.10.10
 
-# Copy installation to RAM disk
-export RAM=/dev/shm/turbulence-at-fronts
-cp -r $HOME/turbulence-at-fronts/.julia-trig $RAM
-
-# Launch from RAM disk
-export JULIA_DEPOT_PATH=$RAM/.julia-trig
+export JULIA_DEPOT_PATH=$SCRATCH/.julia-trig
 export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
