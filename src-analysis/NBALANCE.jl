@@ -29,6 +29,6 @@ F = dfm(F3D)
 
 dependency_fields = (; N²_aux_fields..., DN²Dt, F3D, F)
 
-output_fields = (; N², DN²Dt, ∂w∂zN², ∂u∂zM², F)
+output_fields = (; N², DN²Dt, ∂w∂zN², ∂u∂zM², F, div_UN²)
 
 skip_update = (:u_next, :v_next, :w_next, :pNHS, :pNHS_next)

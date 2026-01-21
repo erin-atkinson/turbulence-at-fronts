@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=192
-#SBATCH --time=2:15:00
+#SBATCH --time=0:45:00
 #SBATCH --job-name=ppPV
 #SBATCH --output=../scratch/logs/ppPV.txt
 

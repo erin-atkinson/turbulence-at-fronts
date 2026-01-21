@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=192
-#SBATCH --time=1:00:00
-#SBATCH --job-name=ppDFM
-#SBATCH --output=../scratch/logs/ppDFM.txt
+#SBATCH --time=2:00:00
+#SBATCH --job-name=ppSLICES
+#SBATCH --output=../scratch/logs/ppSLICES.txt
 
 module load julia/1.10.10
 
@@ -22,6 +22,6 @@ cd ~/turbulence-at-fronts
 
 # Location of output.jld2
 export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain
-julia -t 192 -- src-analysis/postprocess/postprocess.jl $SIM_OUTPUT_FOLDER DFM $RAM
+julia -t 192 -- src-analysis/postprocess/postprocess.jl $SIM_OUTPUT_FOLDER SLICES $RAM
 
 rm $RAM -rf

@@ -3,28 +3,20 @@ include("terms/vorticity/vorticity.jl")
 include("terms/advection/advection.jl")
 include("terms/advection/diffusion.jl")
 
-
 include("terms/pv/q.jl")
 include("terms/pv/uq.jl")
 include("terms/pv/Vq.jl")
 
-q = Field(KernelFunctionOperation{Center, Center, Center}(q_func, grid, clock, input_fields, (; ), sp))
+u_dfm = dfm(input_fields.u)
+v_dfm = dfm(input_fields.v)
+w_dfm = dfm(input_fields.w)
+b_dfm = dfm(input_fields.b)
 
-uq = Field(KernelFunctionOperation{Face, Center, Center}(uq_func, grid, clock, input_fields, (; q), sp))
-wq = Field(KernelFunctionOperation{Center, Center, Face}(wq_func, grid, clock, input_fields, (; q), sp))
-div_Uq = Field(KernelFunctionOperation{Center, Center, Center}(div_Uq_func, grid, clock, input_fields, (; q), sp))
+mean_fields = (; u = u_dfm, v = v_dfm, w = w_dfm, b = b_dfm)
 
-Vq = Field(KernelFunctionOperation{Center, Center, Center}(Vq_func, grid, clock, input_fields, (; q), sp))
+q = Field(KernelFunctionOperation{Center, Nothing, Center}(q_func, grid, clock, mean_fields, (; ), sp))
 
-q_dfm = dfm(q)
-
-uq_dfm = dfm(uq)
-wq_dfm = dfm(wq)
-div_Uq_dfm = dfm(div_Uq)
-
-Vq_dfm = dfm(Vq)
-
-dependency_fields = (; q, uq, wq, div_Uq, Vq, q_dfm, uq_dfm, wq_dfm, div_Uq_dfm, Vq_dfm)
-output_fields = (; q_dfm, uq_dfm, wq_dfm, div_Uq_dfm, Vq_dfm)
+dependency_fields = (; q)
+output_fields = (; q)
 
 skip_update = (:pNHS, :u_next, :v_next, :w_next, :b_next, :pNHS_next)

@@ -21,7 +21,7 @@ export JULIA_SCRATCH_TRACK_ACCESS=0
 cd ~/turbulence-at-fronts
 
 # Location of output.jld2
-export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain-Old
+export SIM_OUTPUT_FOLDER=../scratch/turbulence-at-fronts/Strain
 julia -t 192 -- src-analysis/postprocess/postprocess.jl $SIM_OUTPUT_FOLDER NBALANCE $RAM
 
 rm $RAM -rf

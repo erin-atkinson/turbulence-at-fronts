@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=192
-#SBATCH --time=1:30:00
+#SBATCH --time=2:30:00
 #SBATCH --job-name=ppVBALANCE
 #SBATCH --output=../scratch/logs/ppVBALANCE.txt
 
