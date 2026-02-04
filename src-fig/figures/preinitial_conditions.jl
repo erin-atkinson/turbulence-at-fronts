@@ -17,7 +17,7 @@ function preinitial_conditions(sp)
     σs = [σ(z, sp) for x in xs, z in zs] .* 3600
     hs = [h₀(x, sp) for x in xs]
     
-    fig = Figure(; size=(600, 160))
+    fig = Figure(; size=(600, 210), fontsize=16)
 
     ax = Axis(fig[1, 1]; 
         xlabel=L"x / \text{km}", 

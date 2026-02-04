@@ -42,4 +42,4 @@ TKE_fields = merge(TKE_fields, (; ε))
 dependency_fields = merge(mean_fields, TKE3D_fields, TKE_fields)
 output_fields = TKE_fields
 
-skip_update = (:pNHS, :pNHS_next)
+skip_update = (:pNHS_next, :pNHS)

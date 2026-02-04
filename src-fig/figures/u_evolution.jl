@@ -1,46 +1,60 @@
 function u_evolution(
         foldername,
         frames,
-        z,
         region=nothing; 
         fig_kw=(; ), 
         ax_kw=(; ),
         axh_kw=(; ),
         ht_kw=(; ),
         ct_kw=(; ),
+        arr_kw=(; ),
         σ=0,
         σh=0,
         background=true,
         mixed_depth=false,
+        arrow=false
     )
 
-    OUTPUT = joinpath(foldername, "output.jld2")
+    SLICES = joinpath(foldername, "SLICES.jld2")
     DFM = joinpath(foldername, "DFM.jld2")
 
-    iterations, times = iterations_times(DFM)
+    full_iterations, full_times = iterations_times(DFM)
     sp = simulation_parameters(DFM)
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(DFM)
     inds = center_indices(DFM)
+
     colormap = to_colormap(:balance)
-    z_indᶜ = zᶜbounds(DFM, z)
     
     fig = Figure(; 
         size=(1000, 400),
         fig_kw...
     )
 
-    iterations = iterations[frames]
-    times = times[frames]
+    iterations = full_iterations[frames]
+    times = full_times[frames]
 
-    U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, yz in 1:1] .* background
+    U = if background
+        [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, yz in 1:1]
+    else
+        0
+    end
 
     u_dfm = 100 * (timeseries_of(a->filt(a, σ), DFM, "u_dfm", iterations) .+ U)
-    uh = 100 * (timeseries_of(a->filt(a[:, :, z_indᶜ], σh), OUTPUT, "u", iterations) .+ U)
-    
-    b_dfm = timeseries_of(a->filt(a, σ), DFM, "b_dfm", iterations)
-    bh = timeseries_of(a->filt(a[:, :, z_indᶜ], 1, 1), OUTPUT, "b", iterations)
+    uh = 100 * (timeseries_of(a->filt(a, σh), SLICES, "z050_u", iterations) .+ U)
 
-    MLD = b_dfm .- (b_dfm[:, :, end:end] .- (b_levels[3] - b_levels[1])) 
+    b_dfm = timeseries_of(a->filt(a, σ), DFM, "b_dfm", iterations)
+    bh = timeseries_of(a->filt(a, σh), SLICES, "z050_b", iterations)
+
+    u = time_average_of(a->filt(a, σ), DFM, "u_dfm", full_iterations[end-100:end]) .+ [-sp.α * x for x in xsᶠ, z in 1:1]
+    u = (u[1:end-1, :] .+ u[2:end, :]) ./ 2
+    w = time_average_of(a->filt(a, σ), DFM, "w_dfm", full_iterations[end-100:end])
+    w = (w[:, 1:end-1] .+ w[:, 2:end]) ./ 2
+
+    # Arrow plots
+    xs_u = xsᶜ[1:60:end] ./ 1000
+    zs_u = zsᶜ[1:20:end]
+    u = u[1:60:end, 1:20:end] ./ 1000
+    w = w[1:60:end, 1:20:end]
     
     u_max = max(maximum(abs, u_dfm[:, inds, :]), maximum(abs, uh[:, inds, :]))
     
@@ -55,7 +69,7 @@ function u_evolution(
         xlabel=L"x/\text{km}",
         ylabel=L"z/\text{m}",
         xticks=[-2, -1, 0, 1, 2],
-        limits=(-sp.ℓ / 1000, sp.ℓ / 1000, -sp.H, 0),
+        limits=(-sp.Lh/ 2000, sp.Lh / 2000, -sp.H, 0),
         ax_kw...
     )
     
@@ -63,7 +77,7 @@ function u_evolution(
         xlabel=L"x/\text{km}",
         ylabel=L"y/\text{km}",
         xticks=[-2, -1, 0, 1, 2],
-        limits=(-sp.ℓ / 1000, sp.ℓ / 1000, -sp.Ly / 2000, sp.Ly / 2000),
+        limits=(-sp.Lh / 2000, sp.Lh / 2000, -sp.Ly / 2000, sp.Ly / 2000),
         axh_kw...
     )
 
@@ -104,7 +118,7 @@ function u_evolution(
     end
     
     map(1:length(frames), axs) do i, ax
-        mixed_depth && contour!(ax, xsᶜ / 1000, zsᶜ, MLD[i, :, :]; levels=[0], color=:blue, linestyle=:dash)
+        #mixed_depth && contour!(ax, xsᶜ / 1000, zsᶜ, MLD[i, :, :]; levels=[0], color=:blue, linestyle=:dash)
     end
 
     ctsh = map(1:length(frames), axsh) do i, ax
@@ -118,11 +132,25 @@ function u_evolution(
         subfig_label!(fig[i, 2], 2i)
     end
     for ax in axs
-        lines!(ax, [ax_kw.limits[1], ax_kw.limits[2]], [z, z]; color=(:red, 0.5), linestyle=:dash)
+        lines!(ax, [ax_kw.limits[1], ax_kw.limits[2]], [-50, -50]; color=(:red, 0.5), linestyle=:dash)
     end
     if region !== nothing
         mask = [maskfromlines(1000x, z, region) for x in range(-sp.Lh/2000, sp.Lh/2000, 1000), z in range(-sp.Lz, 0, 1000)]
         contour!(axs[end], range(-sp.Lh/2000, sp.Lh/2000, 1000), range(-sp.Lz, 0, 1000), mask, levels=[0.5]; color=:magenta, linestyle=:dashdot, linewidth=1)
     end
+
+    arr_kw = (; 
+        lengthscale=5000, 
+        color = abs.(w)[:], 
+        colormap = [RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 1)],
+        #colorrange = (0, maximum(abs, w) / 2),
+        colorrange = (0, 100 / (24 * 3600)),
+        arr_kw...
+    )
+    @info maximum(abs, w) ./ 2
+    if arrow
+        arrows2d!(axs[end], xs_u, zs_u, u, w; arr_kw...)
+    end
+    
     fig
 end

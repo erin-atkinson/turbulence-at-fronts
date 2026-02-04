@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=192
-#SBATCH --time=3:00:00
+#SBATCH --time=5:00:00
 #SBATCH --job-name=ppTKE
 #SBATCH --output=../scratch/logs/ppTKE.txt
 

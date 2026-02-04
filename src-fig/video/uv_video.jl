@@ -1,8 +1,7 @@
 function uv_video(
         foldername,
         filename,
-        frames,
-        z;
+        frames;
         fig_kw=(; ), 
         ax_kw=(; ),
         axh_kw=(; ),
@@ -13,12 +12,16 @@ function uv_video(
         σh=0,
         background=false
     )
-    iterations, times = iterations_times(foldername)
-    sp = simulation_parameters(foldername)
-    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(foldername)
-    inds = centre_indices(foldername)
+    
+    SLICES = joinpath(foldername, "SLICES.jld2")
+    DFM = joinpath(foldername, "DFM.jld2")
+
+    iterations, times = iterations_times(DFM)
+    sp = simulation_parameters(DFM)
+    xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(DFM)
+    inds = center_indices(DFM)
+    
     colormap = to_colormap(:balance)
-    z_indᶜ = zᶜbounds(foldername, z)
 
     iterations = iterations[frames]
     times = times[frames]
@@ -26,35 +29,40 @@ function uv_video(
     n = Observable(1)
     iteration = @lift iterations[$n]
     t = @lift times[$n]
-    u_title = @lift let time_string = prettytime($t / 3600; digits=1)
-        L"u, t=%$time_string ~\text{hr}"
+    u_title = @lift let t = $t
+        t_val = @sprintf "%03.1f" sp.f * t / 2π
+        hr_val = @sprintf "%03.0f" t / 3600
+        
+        L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end
-    v_title = @lift let time_string = prettytime($t / 3600; digits=1)
-        L"v, t=%$time_string ~\text{hr}"
+    v_title = @lift let t = $t
+        t_val = @sprintf "%03.1f" sp.f * t / 2π
+        hr_val = @sprintf "%03.0f" t / 3600
+        
+        L"ft / 2\pi = %$(t_val) \quad t = %$(hr_val)~\text{hr}"
     end
     
     U = [-variable_strain_rate(t, sp) * x for t in times, x in xsᶠ, y in 1:1, z in 1:1] .* background
-    V = [variable_strain_rate(t, sp) * y for t in times, x in 1:1, y in ysᶠ, z in 1:1] .* background
     
     fig = Figure(; 
         size=(960, 540),
         fig_kw...
     )
     
-    DFM = jldopen(joinpath(foldername, "DFM.jld2"))
-    OUTPUT = jldopen(joinpath(foldername, "output.jld2"))
-    
-    colorrange_u = (-0.06, 0.06)
-    colorrange_v = (-0.2, 0.2)
+    colorrange_u = (-6, 6)
+    colorrange_v = (-20, 20)
 
-    u = @lift get_field(DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :]
-    v = @lift get_field(DFM, "v_dfm", $iteration)
-    b = @lift get_field(DFM, "b_dfm", $iteration)
-    MLD = @lift $b .- ($b[:, end:end] .- (b_levels[3] - b_levels[1])) 
+    SLICES = jldopen(joinpath(foldername, "SLICES.jld2"))
+    DFM = jldopen(joinpath(foldername, "DFM.jld2"))
+
+    b0 = get_field(a->mean(a), DFM, "b_dfm", iterations[1])
+    u = @lift 100 * (get_field(a->filt(a, σ), DFM, "u_dfm", $iteration) .+ U[$n, :, 1, :])
+    v = @lift 100 * get_field(a->filt(a, σ), DFM, "v_dfm", $iteration)
+    b = @lift get_field(a->filt(a .- (mean(a) - b0), σ), DFM, "b_dfm", $iteration)
     
-    uh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "u", $iteration) .+ U[$n, :, :, 1]
-    vh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "v", $iteration) .+ V[$n, :, :, 1]
-    bh = @lift get_field(a->a[:, :, z_indᶜ], OUTPUT, "b", $iteration)
+    uh = @lift 100 * (get_field(a -> filt(a, σh), SLICES, "z050_u", $iteration) .+ U[$n, :, :, 1])
+    vh = @lift 100 * get_field(a -> filt(a, σh), SLICES, "z050_v", $iteration)
+    bh = @lift get_field(a -> filt(a .- (mean(a) - b0), σh), SLICES, "z050_b", $iteration)
     
     ax_u = Axis(fig[2, 1];
         limits=(-sp.Lh/2000, sp.Lh/2000, -sp.H, 0),
@@ -121,8 +129,8 @@ function uv_video(
     contour!(ax_uh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_kw...)
     contour!(ax_vh, xsᶜ ./ 1000, ysᶜ ./ 1000, bh; ct_kw...) 
     
-    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{ms}^{-1}")
-    Colorbar(fig[3, 2], ht_v; vertical=false, flipaxis=false, label=L"v / \text{ms}^{-1}")
+    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{cm}\,\text{s}^{-1}")
+    Colorbar(fig[3, 2], ht_v; vertical=false, flipaxis=false, label=L"v / \text{cm}\,\text{s}^{-1}")
 
     hidexdecorations!(ax_uh; ticks=true)
     hidexdecorations!(ax_vh; ticks=true)
@@ -138,7 +146,7 @@ function uv_video(
     subfig_label!(fig[2, 2], 4)
     
     for ax in [ax_u, ax_v]
-        lines!(ax, [-sp.Lx / 2, sp.Lx / 2], [z, z]; color=(:red, 0.5), linestyle=:dash)
+        lines!(ax, [-sp.Lx / 2000, sp.Lx / 2000], [-0.5sp.H, -0.5sp.H]; color=(:red, 0.5), linestyle=:dash)
     end
     if length(frames) > 1
         record(fig, filename, 1:length(frames); record_kw...) do i
@@ -148,7 +156,7 @@ function uv_video(
         println("")
     end
     close(DFM)
-    close(OUTPUT)
+    close(SLICES)
 
     fig
 end
