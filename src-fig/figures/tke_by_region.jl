@@ -82,7 +82,7 @@ function tke_by_region(
         xlabel=L"t / \text{hr}",
         ax_kw...,
         limits=(0, 160, -0.5, 0.5),
-        title = L"\text{Arrest region}",
+        title = L"\text{Arrest volume}",
         ylabel = ""
     )
     
