@@ -91,7 +91,6 @@ function u_evolution(
     
     hidexdecorations!.(axs[1:end-1]; ticks=false)
     hidexdecorations!.(axsh[1:end-1]; ticks=false)
-    hideydecorations!.(axsh; ticks=false)
 
     ht_kw = (;
         colormap,
@@ -125,7 +124,7 @@ function u_evolution(
         contour!(ax, xsᶜ / 1000, ysᶠ / 1000, bh[i, :, :]; ct_kw...)
     end
 
-    Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"u / \text{cm}\,{s}^{-1}", vertical=false, flipaxis=false)
+    Colorbar(fig[length(frames) + 1, 1:2], hts[1]; label=L"(u + U) / \text{cm}\,{s}^{-1}", vertical=false, flipaxis=false)
 
     for i in 1:length(frames)
         subfig_label!(fig[i, 1], 2(i-1) +1)

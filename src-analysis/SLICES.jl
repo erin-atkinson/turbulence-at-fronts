@@ -21,19 +21,19 @@ for ξ in (:u, :v, :w, :b)
     end
 end
 
-# y = 0
+# y = Ly/2
 for ξ in (:u, :v, :w, :b)
-    center_ξ = Symbol(:center_, ξ)
-    @info "Slices $center_ξ"
+    front_ξ = Symbol(:front_, ξ)
+    @info "Slices $front_ξ"
 
     
     @eval begin
         field = input_fields.$ξ
         (Lx, Ly, Lz) = location(field)
 
-        $center_ξ = Field(KernelFunctionOperation{Lx, Nothing, Lz}(y_slice_func, grid, field, 0.0, (Lx(), Ly(), Lz())))
+        $front_ξ = Field(KernelFunctionOperation{Lx, Nothing, Lz}(y_slice_func, grid, field, sp.Ly/2, (Lx(), Ly(), Lz())))
 
-        dependency_fields = merge(dependency_fields, (; $center_ξ))
+        dependency_fields = merge(dependency_fields, (; $front_ξ))
     end
 end
 

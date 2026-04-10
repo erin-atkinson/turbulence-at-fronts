@@ -9,7 +9,7 @@ using CUDA: @allowscalar
     return (1 - abs(s))^2
 end
 
-# Damp b towards the bottom value
+# Damp b towards a linear profile
 @inline function b_forcing_func(i, j, k, grid, clock, model_fields)
     (x, y, z, ) = node(i, j, k, grid, Center(), Center(), Center())
     (z_bottom, ) = node(i, j, 0, grid, Nothing(), Nothing(), Center())
