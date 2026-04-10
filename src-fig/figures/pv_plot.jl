@@ -62,7 +62,7 @@ function pv_plot(
 
     # Set each title
     hr_vals = map(times) do t
-        @sprintf "%03.0f" t / 3600
+        @sprintf "%.0f" t / 3600
     end
     titles = [
         L"t = %$(hr_vals[1])~\text{hr}",
