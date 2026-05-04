@@ -21,7 +21,7 @@ function tke_by_region(
     xsᶜ, xsᶠ, ysᶜ, ysᶠ, zsᶜ, zsᶠ = grid_nodes(TKE)
     inds = center_indices(TKE)
     
-    term_labels = [L"\text{VSP}", L"\text{GSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"\varepsilon"]
+    term_labels = [L"\text{VSP}", L"\text{GSP}", L"\text{LSP}", L"\text{BFLUX}", L"\text{DSP}'", L"\varepsilon", L"\text{d}\text{TKE} / \text{d}t"]
     colors = Makie.wong_colors()
     
     # Plot in front and in arrest region
@@ -49,14 +49,17 @@ function tke_by_region(
     DSP′ = timeseries_of(a->sum(mask .* a), TKE, "DSP", iterations) * Δt / ΔE
 
     tke = timeseries_of(a->sum(mask .* a), joinpath(foldername, "TKE.jld2"), "TKE", iterations) * Δt / ΔE
-    ε = diff([0; tke]) ./ diff([times[1] - (times[2] - times[1]); times]) .- (VSP .+ LSP .+ BFLUX .+ DSP′)
-
+    DTKEDt = diff([0; tke]) ./ diff([times[1] - (times[2] - times[1]); times])
+    ε = DTKEDt .- (VSP .+ LSP .+ BFLUX .+ DSP′)
+    
     mask = [maskfromlines(x, z, regions.arrest) for x in xsᶜ, z in zsᶜ]
     VSP_arrest = timeseries_of(a->sum(mask .* a), TKE, "VSP", iterations) * Δt / ΔE
     GSP_arrest = timeseries_of(a->sum(mask .* a), TKE, "GSP", iterations) * Δt / ΔE
     LSP_arrest = timeseries_of(a->sum(mask .* a), TKE, "LSP", iterations) * Δt / ΔE
     BFLUX_arrest = timeseries_of(a->sum(mask .* a), TKE, "BFLUX", iterations) * Δt / ΔE
     DSP′_arrest = timeseries_of(a->sum(mask .* a), TKE, "DSP", iterations) * Δt / ΔE
+    tke_arrest = timeseries_of(a->sum(mask .* a), joinpath(foldername, "TKE.jld2"), "TKE", iterations) * Δt / ΔE
+    DTKEDt_arrest = diff([0; tke_arrest]) ./ diff([times[1] - (times[2] - times[1]); times])
     #ε_arrest = timeseries_of(a->sum(mask .* a), TKE, "ε", iterations) * Δt / ΔE
     
     ax_kw = (;
@@ -76,6 +79,7 @@ function tke_by_region(
         lines!(ax, times ./ 3600, BFLUX; ln_kw..., color=colors[3]),
         lines!(ax, times ./ 3600, DSP′; ln_kw..., color=colors[4]),
         lines!(ax, times ./ 3600, ε; ln_kw..., color=colors[5]),
+        lines!(ax, times ./ 3600, DTKEDt; ln_kw..., color=:black, linestyle=:dash),
     ]
 
     ax_kw = (;
@@ -92,7 +96,8 @@ function tke_by_region(
     lines!(ax_arrest, times ./ 3600, GSP_arrest; ln_kw..., color=colors[1], linestyle=:dash)
     lines!(ax_arrest, times ./ 3600, LSP_arrest; ln_kw..., color=colors[2])
     lines!(ax_arrest, times ./ 3600, BFLUX_arrest; ln_kw..., color=colors[3])
-    lines!(ax_arrest, times ./ 3600, DSP′_arrest; ln_kw..., color=colors[4])
+    lines!(ax_arrest, times ./ 3600, DSP′_arrest; ln_kw..., color=colors[4]),
+    lines!(ax_arrest, times ./ 3600, DTKEDt_arrest; ln_kw..., color=:black, linestyle=:dash),
     #lines!(ax_arrest, times ./ 3600, ε_arrest; ln_kw..., color=colors[5])
     
     Legend(fig[1, 3], lns, term_labels, L"E_0 \Delta P")

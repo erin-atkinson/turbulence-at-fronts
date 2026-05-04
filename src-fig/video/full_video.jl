@@ -141,7 +141,7 @@ function full_video(
     # PV heatmap
     ht_q = heatmap!(ax_q, xsᶜ ./ 1000, zsᶜ, q; ht_q_kw...)
 
-    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"u / \text{cm}\,{s}^{-1}")
+    Colorbar(fig[3, 1], ht_u; vertical=false, flipaxis=false, label=L"(u + U) / \text{cm}\,{s}^{-1}")
     Colorbar(fig[3, 2], ht_q; vertical=false, flipaxis=false, label=L"q / fN_0^2")
 
     #hidespines!(ax_TKE_series)

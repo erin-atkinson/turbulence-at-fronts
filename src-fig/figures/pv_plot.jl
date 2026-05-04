@@ -46,7 +46,7 @@ function pv_plot(
 
     # Suppress vertical velocities larger than 1mm/s
     s = abs.(w)
-    s_max = 0.001
+    s_max = 80 / (24 * 3600)
     s = map(s) do S
         S > s_max ? S/s_max : 1
     end
